@@ -1,0 +1,281 @@
+html, body{
+  font-family: "微软雅黑", sans-serif;
+  font-style: normal;
+}
+
+body{
+  margin: 0;
+  padding: 0;
+  color: #000;
+  font-size: 11px;
+  overflow: hidden;
+}
+
+a{
+  color: #333;
+  text-decoration: none;
+}
+
+a:hover{
+  text-decoration: underline;
+}
+
+#error{
+  margin: 5px;
+  margin-bottom: 10px;
+  background-color: #8e8e8e;
+}
+
+#signin{
+  width: 210px;
+  background: #fff;
+  margin: 0;
+  padding: 3px;
+  color: #4A89CE;
+}
+
+#signin h1{
+  margin: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-align: center;
+  width: 100%;
+}
+
+#signin label{
+  float:left;
+  width: 40px;
+}
+
+#signin input[type="text"], #signin input[type="password"] {
+  border: 1px solid #6D9DCF;
+  width: 140px;
+  margin-bottom: 5px;
+}
+
+#signin input[type="checkbox"]{
+  margin-left: 40px;
+}
+
+#signin input[tyle="button"]{
+  background-color: #eee;
+  border: 1px solid #5b5b5b;
+  width: 120px;
+  margin-left: 80px;
+  margin-top: 5px;
+}
+
+#signin input[tyle="button"]:hover{
+  outline: 1px solid #882;
+}
+
+
+#workspace{
+  min-width: 370px;
+  margin: 0 4px;
+}
+
+#timeline {
+  margin: 0px;
+  padding: 0px;
+}
+
+.tweet {
+  -webkit-border-radius: 5px;
+  width: 350px;
+  background-color: #89D1E3;
+  padding: 2px 4px 2px 4px;
+  margin-bottom: 3px;
+}
+
+.tweet.unread {
+  background-color: #62C2DA;
+}
+
+.tweet .user {
+  font-size: 9pt;
+  color: #535353;
+  font-weight: bold;
+  font-style: italic;
+  text-decoration: none;
+}
+
+.tweet .footer {
+  margin: 0px;
+  padding: 0px;
+}
+
+.tweet .timestamp {
+  font-size: 8pt;
+  color: #686868;
+  font-style: italic;
+  margin-top: 2px;
+  float: left;
+}
+
+.tweet .actions {
+  float: right;
+}
+
+.tweet .actions a {
+  font-size: 8pt;
+  color: #686868;
+  font-style: italic;
+}
+
+.tweet img {
+  -webkit-border-radius: 5px;
+  border: 0;
+  margin-right: 4px;
+  float: left;
+  cursor: pointer;
+  height: 48px;
+  width: 48px;
+}
+
+.clear{
+  clear: both;
+}
+
+#logout{
+  float:left;
+  font-size: 8pt;
+  margin-top: 4px;
+}
+
+#loading{
+  float: right;
+  margin: 0;
+  padding: 0;
+}
+
+#update_tweets {
+  display: none;
+  -webkit-border-radius: 10px;
+  background-color: #f4f4f4;
+  font-size: 9pt;
+  color: #666;
+  font-weight: bold;
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 3px;
+  cursor: pointer;
+}
+
+#update_tweets:hover{
+  background: #fff;
+}
+
+#compose_tweet_area textarea {
+  width: 100%;
+  border: 1px solid #6D9DCF;
+  margin: 0px;
+  padding: 0px;
+}
+
+#compose_tweet_area .footer .chars_left {
+  margin-top: 3px;
+  float: right;
+}
+
+#compose_tweet_area input[type="button"] {
+  margin: 2px 0px 2px 0px;
+  padding: 0px;
+  background-color: #eee;
+  border: 1px solid #5b5b5b;
+}
+
+#compose_tweet_area input[type="button"]:hover {
+  outline: 1px solid #6D9DCF;
+}
+
+#compose_tweet_area input[type="button"]:hover:disabled {
+  outline: inherit;
+}
+
+#compose_tweet img {
+  margin-top: 3px;
+}
+
+#compose_tweet img.left {
+  float: left;
+  margin-left: 5px;
+}
+
+#compose_tweet img.right {
+  float: right;
+  margin-right: 5px;
+}
+
+#compose_tweet {
+  -webkit-border-radius: 10px;
+  background-color: #6D9DCF;
+  font-size: 9pt;
+  color: #494949;
+  font-weight: bold;
+  font-style: italic;
+  margin: 0px;
+  padding: 0px;
+  text-align: center;
+  cursor: pointer;
+}
+
+#compose_tweet:hover {
+  background-color: #5E93CA;
+}
+
+#paginator {
+  float: left;
+  width: 30px;
+  height: 20px;
+  margin: 0px;
+  padding: 0px;
+}
+
+#paginator img {
+  cursor: pointer;
+}
+
+#tabs{
+
+}
+
+#tabs a:hover{
+  text-decoration:none;
+}
+
+#tabs ul{
+    list-style: none;
+    height: 22px;
+    width: 280px;
+    padding: 0;
+    margin: 0 auto;
+}
+
+#tabs ul li{
+    display: block;
+    width: 80px;
+    height: 22px;
+    margin-right: 8px;
+    border: 1px solid #8FD2DC;
+    border-bottom: 0;
+    font-size: 11px;
+    float:left;
+    text-align: center;
+    line-height: 23px;
+}
+
+#tabs li.current{
+    border: 1px solid #8FD2DC;
+    border-bottom: 2px solid #fff;
+}
+
+#tabs .container{
+    border-top: 1px solid #8FD2DC;
+    padding-top: 10px;
+    max-height: 400px;
+    padding-right: 20px;
+    overflow: auto;
+    overflow-x: hidden;
+    width: 358px;
+}

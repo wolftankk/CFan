@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="css/global.css" />
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-custom.js"></script>
+    <script type="text/javascript" src="js/fanfou_lib.js"></script>
+    <script type="text/javascript">
+        $.fn.hoverFor = function(time, mainCallback, startingCallback, abortCallback) {
+          return this.each(function(){
+            var _this = this, timeoutHandle, triggerFired = false;
+            $(this).hover(
+              function() {
+                if(triggerFired)
+                  return;
+                if(startingCallback)
+                  startingCallback.call(_this);
+                timeoutHandle = setTimeout(function() {
+                  triggerFired = true;
+                  mainCallback.call(_this);
+                  timeoutHandle = null;
+                }, time);
+              },
+              function() {
+                if(triggerFired)
+                  return;
+                if(timeoutHandle) {
+                  if(abortCallback)
+                    abortCallback.call(_this);
+                  clearTimeout(timeoutHandle);
+                  timeoutHandle = null;
+                }
+              }
+            );
+         });
+        };
+
+      var FanfouManager = chrome.extension.getBackgroundPage().FanfouManager;
+      var FanfouConst = chrome.extension.getBackgroundPage().FanfouConstants;
+      var loadingNewTweets = false;
+      Paginator = {
+        needsMore: false,
+        firstPage : function(){
+            this.needsMore = false;
+            $("#timeline").scrollTop(0);
+        },
+        nextPage : function(){
+            this.needsMore = true;
+            loadTimeline(); 
+        }
+      }
+
+      function formatTime(time){
+        var inputTime = Date.parse(time);
+        var now = new Date().getTime();
+
+        var diff = (now - inputTime) / 1000;
+        if (diff < 15){
+            return "刚刚发送";
+        }else{
+            if (diff < 60){
+                return "1分钟前";
+            }else{
+                if (diff < 60 * 60){
+                    var mins = parseInt(diff / 60);
+                    return mins + "分钟前";
+                }else{
+                    return new Date(time).toLocaleDateString();
+                }
+            }
+        }
+      }
+
+      function setError(msg, tryfunc){
+        $("#error").show();
+        $("#error").text(msg);
+        if (tryfunc){
+          $("#error").append(' <a href="#" onclick="' + tryfunc + '(); $(\'#error\').hide();">再尝试一次</a>');
+        }
+      }
+
+      function onTimelineRetrieved(tweets){
+        $("#loading").hide();
+        if (tweets){
+              Paginator.needsMore = false;
+              assemblyTweets(tweets);
+        }else{
+           showError('Unexpected error "' + chrome.extension.getBackgroundPage().TweetManager.currentError + '" during communication.', 'loadTimeline');
+        }
+        loadingNewTweets = false;
+      }
+
+      function openTab(taburl){
+        chrome.tabs.create({url : taburl});
+      }
+
+      function renderTweet(tweet){
+        var str = '<div id="tweet_' + tweet.id + '" class="tweet">';
+        str += '<img src="' + tweet.user.profile_image_url + '" onclick="openTab(\'' + FanfouLib.URLS.BASE + tweet.user.id + '\')"></img>';
+        str += '<a href="#" class="user" onclick="openTab(\'' + FanfouLib.URLS.BASE + tweet.user.id + '\')">' + tweet.user.screen_name + '</a>';
+        str += '<div class="text">' + tweet.text + '</div>';
+        str += '<div class="footer">';
+        str += '<div class="timestamp">' + formatTime(tweet.created_at) + '</div>';
+        str += '<div class="actions"><a href="#" onclick="retweet(this.parentNode.parentNode.parentNode)">转发</a> <a href="#" onclick="reply(this.parentNode.parentNode.parentNode)">回复</a> <a href="#">收藏</a></div>'
+        str += '</div>';
+        str += '<div style="clear: both;"></div>'
+        str += '</div>'
+
+        return str;
+      }
+
+      function assemblyTweets(tweets){
+        $("#timeline").html("");
+        for (var c = 0; c < tweets.length; ++c){
+          $("#timeline").append(renderTweet(tweets[c]));
+        }
+
+        for(var unreadId in FanfouManager.unreadTweets) {
+          $("#tweet_" + unreadId).addClass('unread');
+        }
+        
+
+        $(".tweet.unread").hoverFor(2000,
+          function() {
+            //Hovering for <time> seconds, let's read it.
+            FanfouManager.readTweet(this.id.split('_')[1]);
+            $(this).removeClass('unread');
+          },
+          function() {
+            //Starting countdown to read
+            $(this).animate({
+              backgroundColor: '#ee7'
+            }, 2000);
+          },
+          function() {
+            //Countdown aborted
+            $(this).stop();
+            $(this).css('background-color', '#C1E3EB');
+          }
+        );
+
+      }
+
+      function loadTimeline(force){
+        loadingNewTweets = true;
+        $("#loading").show();
+        if (force){
+          Paginator.firstPage();
+        }
+        var cacheOnly = true;
+        if (Paginator.needsMore){
+            cacheOnly = false;
+        }
+
+        FanfouManager.giveMeTweets(onTimelineRetrieved, force, cacheOnly);
+      }
+      
+      function sendTweet(){
+        $("#loading").show();
+        $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
+        $("#compose_tweet_area textarea").attr("disabled", "disabled");
+        var ffBackend = chrome.extension.getBackgroundPage().getFanfouBackend();
+        ffBackend.tweet(function(success, data, status){
+            $("#loading").hide();
+            $("#compose_tweet_area input[type='button']").removeAttr("disabled");
+            $("#compose_tweet_area textarea").removeAttr("disabled");
+            if (success){
+              $("#compose_tweet_area textarea").val("");
+              textareaChanged();
+              showComposeArea();
+              loadTimeline(true);
+            }else{
+            }
+        }, $("#compose_tweet_area textarea").val());
+      }
+      
+      function retweet(node){
+          showComposeArea(true);
+          var el = $("#compose_tweet_area textarea");
+          var user = $(".user", node).text();
+          var msg = $(".text", node).text();
+          el.val("转 @" + user + " " + msg);
+          textareaChanged();
+      }
+
+      function clearUserData(){
+        if(!$("input[name='remember']").is(":checked")) {
+            localStorage.removeItem('remember');
+            localStorage.removeItem('username');
+            localStorage.removeItem('password');
+            localStorage.removeItem('logged');
+        }
+      }
+
+      function signin(){
+        if ($("input[name='remember']").is(":checked")){
+            localStorage.remember = true;
+            localStorage.username = $("input[name='user']").val();
+            localStorage.password = $("input[name='password']").val();
+            localStorage.logged = true;
+        }
+        chrome.extension.getBackgroundPage().signin($("input[name='user']").val(), $("input[name='password']").val());
+        loadTimeline();
+
+        $("#signin").hide();
+        $("#workspace").show();
+      }
+
+      function signout(){
+        localStorage.removeItem("logged");
+        chrome.extension.getBackgroundPage().signout();
+        window.close();
+      }
+
+      function reply(node){
+          showComposeArea(true);
+          var el = $("#compose_tweet_area textarea");
+          var user = $(".user", node).text();
+          el.val("@" + user + " ");
+          textareaChanged();
+      }
+      
+      function showComposeArea(showOnly){
+        if(!$("#compose_tweet_area").is(':visible')) {
+          $("#compose_tweet_area").show();
+          $("#compose_tweet img").attr('src', 'images/arrow_up.gif');
+          $("#compose_tweet_area textarea").focus();
+        } else if(!showOnly) {
+          $("#compose_tweet_area").hide();
+          $("#compose_tweet img").attr('src', 'images/arrow_down.gif');
+        }
+      }
+
+      function textareaChanged(){
+          var el = $("#compose_tweet_area textarea");
+          var availableChars = FanfouConst.MAX_TWEET_SIZE - el.val().length;
+          var charsLeftEl = $("#compose_tweet_area .chars_left");
+          charsLeftEl.text(availableChars);
+          if(availableChars < 0) {
+            charsLeftEl.css('color', 'red');
+            $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
+          } else {
+            charsLeftEl.css('color', 'black');
+            $("#compose_tweet_area input[type='button']").removeAttr("disabled");
+          }
+      }
+      
+      function newTweetsAvailable(count){
+        var text = "新增" + count + " 条最新消息";
+        $("#update_tweets").text(text);
+        $("#update_tweets").fadeIn();
+      }
+
+      function loadNewTweets(){
+        Paginator.firstPage();
+        FanfouManager.updateNewTweets();
+        $("#update_tweets").fadeOut();
+        loadTimeline();
+      }
+        
+      function replaceUsername(){
+        var nickname = chrome.extension.getBackgroundPage().getUserNickName()
+        $("#timeline_mentions-click span").text("@nickname");
+      }
+      
+      $(function(){
+        var ffBackend = chrome.extension.getBackgroundPage().getFanfouBackend();
+        if (!ffBackend){
+          $("#signin").show();
+          $("input[name='user']").focus();
+          if (localStorage.remember){
+              $("input[name='user']").val(localStorage.username);
+              $("input[name='password']").val(localStorage.password);
+              $("input[name='remember']").attr('checked', 'checked');
+              if (localStorage.logged){
+                signin();
+              }
+          }
+        }else{
+          $("#workspace").show();
+          if (FanfouManager.newTweetsCount() > 0){
+            if (FanfouManager.currentPage == 1){
+              FanfouManager.updateNewTweets();
+            }else{
+              newTweetsAvailable(FanfouManager.newTweetsCount());
+            }
+          }
+          loadTimeline();
+        }
+
+        FanfouManager.registerNewTweetsCallback(newTweetsAvailable);
+        textareaChanged();
+        replaceUsername();
+
+        //tabs
+        var _onclick = function(e){
+          if ($(this).attr("class") == "current"){
+            return false;
+          }
+          $("#tabs ul li").each(function(){
+            $(this).removeClass("current");    
+            var id = $(this).attr("id");
+            id = id.replace("-click", "");
+            $("#" + id).hide();
+          });
+          $(this).addClass("current");
+          var __t;
+          switch (e.data.ci){
+            case 0:
+                __t = "#timeline";
+                break;
+            case 1:
+                __t = "#timeline_mentions";
+                break;
+            case 2:
+                __t = "#timeline_dm";
+                break;
+            default:
+                __t = "#timeline";
+                break;
+            }
+            $(__t).show();
+        }
+        $("#tabs ul li").each(function(i){
+            $(this).bind("click", {ci : i}, _onclick); 
+        });
+
+        if (FanfouManager.currentScroll != 0){
+            $("#timeline").scrollTop(tweetManager.currentScroll);
+        }
+        $("#timeline").scroll(function(e){
+            var $this = $(this);
+            var s = 50;
+            FanfouManager.currentScroll = $this.scrollTop();
+            var maxScroll = $this.attr("scrollHeight") - $this.height();
+            if (maxScroll - $this.scrollTop < s){
+                if (!loadingNewTweets){
+                    Paginator.nextPage();
+                }
+            }
+        })
+      });
+    </script>
+  </head>
+  <body>
+    <!--登录-->
+    <div id="signin" style="display:none;">
+      <h1>登录饭否</h1>
+      <label for="user">Email:</label>
+      <input name="user" type="text" />
+      <label for="password">密码:</label> 
+      <input name="password" type="password" />
+      <input type="checkbox" name="remember" onClick="clearUserData();" />记住我
+      <input value="开饭了!" type="button" onclick="signin()" />
+    </div>
+    <div id="error" style="display:none;"></div>
+
+    <div id="workspace" style="display:none;">
+      <div id="compose_tweet_area" style="display:none;">
+        <textarea rows="4" onkeyup="textareaChanged();" onblur="textareaChanged();"></textarea>
+        <div class="footer">
+          <input type="button" value="发推" onclick="sendTweet();"/>
+          <span class="chars_left"></span>
+        </div>
+      </div>
+
+      <div id="compose_tweet" onclick="showComposeArea()">
+        <img class="left" src="images/arrow_down.gif"/>
+        你在做什么?
+        <img class="right" src="images/arrow_down.gif"/>
+      </div>
+
+        <div id="logout"><a href="#" onclick="signout()">退出</a></div>   
+        <img src="images/loading.gif" id="loading" style="display:none;" />
+        <div class="clear"></div>
+        <div id="update_tweets" onclick="loadNewTweets();"></div>
+
+        <div id="tabs">
+            <ul>
+              <li class="current" id="timeline-click"><a href="javascript:;" ><span>首页</span></a></li>
+              <li id="timeline_mentions-click"><a href="javascript:;"><span>memtions</span></a></li>
+              <li id="timeline_dm-click"><a href="javascript:;"><span>私信</span></a></li>
+            </ul>
+            <div class="container" id="timeline"></div>
+            <div class="container" style="display:none;" id="timeline_mentions">Coming Soon</div>
+            <div class="container" style="display:none;" id="timeline_dm">Coming Soon</div>
+        </div>
+    </div>
+  </body>
+</html>
+
+

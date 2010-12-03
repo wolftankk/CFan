@@ -1,0 +1,218 @@
+<html>
+  <head>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/sha1.js"></script>
+    <script type="text/javascript" src="js/icon_creator.js"></script>
+    <script type="text/javascript" src="js/fanfou_lib.js"></script>
+  </head>
+  <body>
+  <script type="text/javascript">
+    var FanfouConstants = {
+      MAX_CACHED_ELEMENTS: 50,
+      WAIT_TIME_UNTIL_REFETCH: 60000,
+      TWEETS_PER_PAGE: 10,
+      MAX_TWEET_SIZE: 140
+    }
+    
+    var FanfouManager = {
+        tweetsCache: [],
+        newTweetsCache: [],
+        unreadTweets: {},
+        timerId: null,
+        currentError: null,
+        currentScroll: 0,
+        currentCallback: null,
+        firstRun: true,
+        newTweetsCallback: null,
+        saveMessage: '',
+        isComposing:false,
+        iconImg : $('<img>').attr('src', 'images/icon-16.png')[0],
+
+        setError: function(status){
+          this.currentError = status;
+        },
+        readTweet:function(id){
+          delete this.unreadTweets[id];
+        },
+        isTweetRead: function(id){
+          return !this.unreadTweets[id];
+        },
+        newTweetsCount:function(){
+          return this.newTweetsCache.length;
+        },
+        notifyNewTweets : function(size){
+          var title = size + " 条新信息";
+          chrome.browserAction.setTitle({title: title});
+          chrome.browserAction.setIcon({imageData: IconCreator.paintIcon(this.iconImg, "#9c2e2e")});
+        },
+        onFetchNew: function(success, tweets, status, context){
+            var that = this;
+            if (!success){
+              this.setError(status);
+              this.timerId = setTimeout(function(){
+                that.fetchNewTweets.call(that);
+              }, FanfouConstants.WAIT_TIME_UNTIL_REFETCH);
+              return;
+            }
+            this.setError(null);
+
+            for (var t = tweets.length - 1; t >= 0; --t){
+                this.newTweetsCache.unshift(tweets[t]);
+                this.unreadTweets[tweets[t].id] = true;
+            }
+            if (tweets.length > 0 ){
+                this.notifyNewTweets(this.newTweetsCache.length);
+                try{
+                  this.newTweetsCallback(this.newTweetsCache.length);
+                }catch(e){ }
+            }
+            this.timerId = setTimeout(function(){ that.fetchNewTweets.call(that); }, FanfouConstants.WAIT_TIME_UNTIL_REFETCH);
+        },
+        onFetch : function(success, tweets, status, context){
+          if (!success){
+              this.setError(status);
+              this.currentCallback(null);
+              this.setError(null);
+              this.currentCallback = null;
+              return;
+          }
+
+          this.setError(null);
+          var c = 0;
+          if (context.usingMaxId){
+            c = 1;
+          }
+          for (; c < tweets.length; ++c){
+            this.tweetsCache.push(tweets[c]);
+          }
+          this.currentCallback(this.tweetsCache);
+          this.currentCallback = null;
+          if (this.firstRun){
+            this.firstRun = false;
+          }
+          this.fetchNewTweets();
+        },
+        updateNewTweets:function(){
+          this.tweetsCache = this.newTweetsCache.concat(this.tweetsCache);
+          this.newTweetsCache = [];
+          chrome.browserAction.setTitle({title : "点击饭否信息"});
+          chrome.browserAction.setIcon({imageData: IconCreator.paintIcon(this.iconImg, "#4880a6")});
+        },
+        giveMeTweets: function(callback, syncNew, cacheOnly){
+          if (this.currentCallback){
+            this.currentCallback = callback;
+            return;
+          }
+          if (syncNew){
+            var oldNewTweetsCallback = this.newTweetsCallback;
+            var that = this;
+            this.currentCallback = callback
+            this.newTweetsCallback = function(){
+              var tcallback = that.currentCallback;
+              that.currentCallback = null
+              that.updateNewTweets();
+              that.giveMeTweets(tcallback, false, true);
+              that.newTweetsCallback = oldNewTweetsCallback;
+            }
+            this.fetchNewTweets();
+            return;
+          }
+          if (cacheOnly && !!this.firstRun){
+            if (this.currentScroll == 0){
+                this.cleanUpCache();
+            }
+            callback(this.tweetsCache);
+            return;
+          }
+          this.cancelNewTweetsTimer();
+
+          this.currentCallback = callback;
+          var maxId = null;
+          if (this.tweetsCache.length > 0 ){
+            maxId = this.tweetsCache[this.tweetsCache.length - 1].id
+          }
+          var context ={
+            usingMaxId: !!maxId
+          }
+          var that = this;
+          ffBackend.friendsTimeline(function(success, tweets, status, context){
+            that.onFetch.call(that, success, tweets, status, context);    
+          }, context, FanfouConstants.TWEETS_PER_PAGE, null, null, maxId);
+        },
+        cleanUpCache : function(){
+            var len = this.tweetsCache.length;
+            if (len <= FanfouConstants.MAX_CACHED_ELEMENTS){
+                return;
+            }
+            var c = len - 1;
+            for (; c >= FanfouConstants.MAX_CACHED_ELEMENTS; --c){
+              if (!this.isTweetRead(this.tweetsCache[c].id)){
+                break;
+              }
+            }
+            this.tweetsCache = this.tweetsCache.slice(0, c+1);
+        },
+        //clear all data
+        clear : function(){
+          this.cancelNewTweetsTimer();
+          this.unreadTweets = {};
+          this.tweetsCache = [];
+          this.newTweetsCache = [];
+          this.newTweetsCallback = null;
+          this.firstRun = true;
+          this.setError(null);
+          this.isComposing = false;
+          this.saveMessage = "";
+          this.currentScroll = 0;
+        },
+        registerNewTweetsCallback : function(callback){
+          this.newTweetsCallback = callback;
+        },
+        cancelNewTweetsTimer : function(){
+            if (this.timerId){
+                clearTimeout(this.timerId);
+                this.timerId = null;
+            }
+        },
+        fetchNewTweets: function(){
+            this.cancelNewTweetsTimer();
+            var lastId = null;
+            if (this.newTweetsCache.length > 0){
+              lastId = this.newTweetsCache[0].id;
+            }else{
+              lastId = this.tweetsCache[0].id;
+            }
+
+            var that = this;
+            ffBackend.friendsTimeline(function(success, tweets, status, context){
+              that.onFetchNew.call(that, success, tweets, status, context);    
+            }, null, null, null, lastId);
+        }
+    }
+
+     var ffBackend = null;
+     function getFanfouBackend(){
+        return ffBackend
+     }
+        
+     function getUserNickName(){
+        return FanfouLib.info.screen_name
+     }
+
+     function signin(user, passwd){
+        ffBackend = new FanfouLib(user, passwd)
+        ffBackend.getSelfInfo();
+     }
+
+     function signout(){
+        FanfouManager.clear();
+        ffBackend = null;
+     }
+
+     if (localStorage.remember && localStorage.logged){
+        signin(localStorage.username, localStorage.password);
+        FanfouManager.giveMeTweets(function(){})
+     }
+  </script>
+  </body>
+</html>
