@@ -1,7 +1,11 @@
-function FanfouLib(user, passwd){
+function FanfouLib(user, passwd, callback){
   this.username = user;
   this.passwd = passwd;
   this.getSelfInfo();
+  
+  if (callback){
+    callback();
+  }
 }
 
 FanfouLib.URLS = {

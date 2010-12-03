@@ -7,6 +7,8 @@
     <script type="text/javascript" src="js/jquery-ui-custom.js"></script>
     <script type="text/javascript" src="js/persistence.js"></script>
     <script type="text/javascript" src="js/options_backend.js"></script>
+
+    <script type="text/javascript" src="js/tweet_transformat.js"></script>
     <script type="text/javascript" src="js/fanfou_lib.js"></script>
     <script type="text/javascript">
         var MAX_TWEET_SIZE = 140;
@@ -39,9 +41,9 @@
          });
         };
 
-      var FanfouManager = chrome.extension.getBackgroundPage().FanfouManager;
+      var FanfouManager = null;
       var loadingNewTweets = false;
-      Paginator = {
+      var Paginator = {
         needsMore: false,
         firstPage : function(){
             this.needsMore = false;
@@ -53,25 +55,8 @@
         }
       }
 
-      function formatTime(time){
-        var inputTime = Date.parse(time);
-        var now = new Date().getTime();
+      var Composer = {
 
-        var diff = (now - inputTime) / 1000;
-        if (diff < 15){
-            return "刚刚发送";
-        }else{
-            if (diff < 60){
-                return "1分钟前";
-            }else{
-                if (diff < 60 * 60){
-                    var mins = parseInt(diff / 60);
-                    return mins + "分钟前";
-                }else{
-                    return new Date(time).toLocaleDateString();
-                }
-            }
-        }
       }
 
       function setError(msg, tryfunc){
@@ -82,7 +67,7 @@
         }
       }
 
-      function onTimelineRetrieved(tweets){
+      function onTimelineRetrieved(tweets, timelineId){
         $("#loading").hide();
         if (tweets){
               Paginator.needsMore = false;
@@ -93,29 +78,10 @@
         loadingNewTweets = false;
       }
 
-      function openTab(taburl){
-        chrome.tabs.create({url : taburl});
-      }
-
-      function renderTweet(tweet){
-        var str = '<div id="tweet_' + tweet.id + '" class="tweet">';
-        str += '<img src="' + tweet.user.profile_image_url + '" onclick="openTab(\'' + FanfouLib.URLS.BASE + tweet.user.id + '\')"></img>';
-        str += '<a href="#" class="user" onclick="openTab(\'' + FanfouLib.URLS.BASE + tweet.user.id + '\')">' + tweet.user.screen_name + '</a>';
-        str += '<div class="text">' + tweet.text + '</div>';
-        str += '<div class="footer">';
-        str += '<div class="timestamp">' + formatTime(tweet.created_at) + '</div>';
-        str += '<div class="actions"><a href="#" onclick="retweet(this.parentNode.parentNode.parentNode)">转发</a> <a href="#" onclick="reply(this.parentNode.parentNode.parentNode)">回复</a> <a href="#">收藏</a></div>'
-        str += '</div>';
-        str += '<div style="clear: both;"></div>'
-        str += '</div>'
-
-        return str;
-      }
-
       function assemblyTweets(tweets){
         $("#timeline").html("");
         for (var c = 0; c < tweets.length; ++c){
-          $("#timeline").append(renderTweet(tweets[c]));
+          $("#timeline").append(Renderer.renderTweet(tweets[c]))
         }
 
         for(var unreadId in FanfouManager.unreadTweets) {
@@ -162,8 +128,7 @@
         $("#loading").show();
         $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
         $("#compose_tweet_area textarea").attr("disabled", "disabled");
-        var ffBackend = chrome.extension.getBackgroundPage().getFanfouBackend();
-        ffBackend.tweet(function(success, data, status){
+        FanfouManager.postTweet(function(success, data, status){
             $("#loading").hide();
             $("#compose_tweet_area input[type='button']").removeAttr("disabled");
             $("#compose_tweet_area textarea").removeAttr("disabled");
@@ -203,6 +168,9 @@
             localStorage.logged = true;
         }
         chrome.extension.getBackgroundPage().signin($("input[name='user']").val(), $("input[name='password']").val());
+        
+        FanfouManager = chrome.extension.getBackgroundPage().FanfouManager.instance;
+
         loadTimeline();
 
         $("#signin").hide();
@@ -267,8 +235,9 @@
       }
       
       $(function(){
-        var ffBackend = chrome.extension.getBackgroundPage().getFanfouBackend();
-        if (!ffBackend){
+        //从后台获取.. 获得是否需要登录
+        FanfouManager = chrome.extension.getBackgroundPage().FanfouManager.instance;
+        if (!FanfouManager){
           $("#signin").show();
           $("input[name='user']").focus();
           if (localStorage.remember){
@@ -280,22 +249,23 @@
               }
           }
         }else{
-          $("#workspace").show();
+         /* $("#workspace").show();
           if (FanfouManager.newTweetsCount() > 0){
             if (FanfouManager.currentPage == 1){
               FanfouManager.updateNewTweets();
             }else{
               newTweetsAvailable(FanfouManager.newTweetsCount());
             }
-          }
-          loadTimeline();
+          }*/
+          //loadTimeline();
         }
-
-        FanfouManager.registerNewTweetsCallback(newTweetsAvailable);
-        textareaChanged();
+        
+        //FanfouManager.registerNewTweetsCallback(newTweetsAvailable);
+        //textareaChanged();
         //replaceUsername();
 
         //tabs
+        /*
         var _onclick = function(e){
           if ($(this).attr("class") == "current"){
             return false;
@@ -341,7 +311,7 @@
                     Paginator.nextPage();
                 }
             }
-        })
+        })*/
       });
     </script>
   </head>
@@ -362,7 +332,7 @@
       <div id="compose_tweet_area" style="display:none;">
         <textarea rows="4" onkeyup="textareaChanged();" onblur="textareaChanged();"></textarea>
         <div class="footer">
-          <input type="button" value="发推" onclick="sendTweet();"/>
+          <input type="button" value="发送" onclick="sendTweet();"/>
           <span class="chars_left"></span>
         </div>
       </div>
