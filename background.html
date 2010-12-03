@@ -43,7 +43,7 @@
         notifyNewTweets : function(size){
           var title = size + " 条新信息";
           chrome.browserAction.setTitle({title: title});
-          chrome.browserAction.setIcon({imageData: IconCreator.paintIcon(this.iconImg, "#9c2e2e")});
+          chrome.browserAction.setIcon({imageData: IconCreator.paintIcon(this.iconImg, OptionsBackend.get("home_color"))});
           chrome.browserAction.setBadgeText({text : size + ""});
           chrome.browserAction.setBadgeBackgroundColor({color : [156, 46, 46, 255]})
         },
@@ -98,7 +98,8 @@
           this.tweetsCache = this.newTweetsCache.concat(this.tweetsCache);
           this.newTweetsCache = [];
           chrome.browserAction.setTitle({title : "点击饭否信息"});
-          chrome.browserAction.setIcon({imageData: IconCreator.paintIcon(this.iconImg, "#4880a6")});
+          chrome.browserAction.setIcon({imageData: IconCreator.paintIcon(this.iconImg, OptionsBackend.get("ids_color"))});
+          chrome.browserAction.setBadgeText({text : ""});
         },
         giveMeTweets: function(callback, syncNew, cacheOnly){
           if (this.currentCallback){
@@ -119,7 +120,7 @@
             this.fetchNewTweets();
             return;
           }
-          if (cacheOnly && !!this.firstRun){
+          if (cacheOnly && !this.firstRun){
             if (this.currentScroll == 0){
                 this.cleanUpCache();
             }

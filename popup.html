@@ -88,7 +88,7 @@
               Paginator.needsMore = false;
               assemblyTweets(tweets);
         }else{
-           showError('Unexpected error "' + chrome.extension.getBackgroundPage().TweetManager.currentError + '" during communication.', 'loadTimeline');
+           showError('Unexpected error "' + chrome.extension.getBackgroundPage().FanfouManager.currentError + '" during communication.', 'loadTimeline');
         }
         loadingNewTweets = false;
       }
@@ -329,7 +329,7 @@
         });
 
         if (FanfouManager.currentScroll != 0){
-            $("#timeline").scrollTop(tweetManager.currentScroll);
+            $("#timeline").scrollTop(FanfouManager.currentScroll);
         }
         $("#timeline").scroll(function(e){
             var $this = $(this);

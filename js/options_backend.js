@@ -8,6 +8,7 @@ OptionsBackend = {
 
     request_timeout : 6000,
     
+    ids_color : "#4880a6",
     home_color : "#9c2e2e"
     //memtions_color : "",
     //dms_color : "#7f870b",

@@ -1,6 +1,7 @@
 function FanfouLib(user, passwd){
   this.username = user;
   this.passwd = passwd;
+  this.getSelfInfo();
 }
 
 FanfouLib.URLS = {
@@ -38,6 +39,7 @@ FanfouLib.prototype.getSelfInfo = function(){
   var that = this;
   this.ajaxRequest("account/verify_credentials", function(success, data){
     if (success){
+      console.log(data);
     }
   });
 }
