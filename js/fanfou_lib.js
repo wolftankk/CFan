@@ -1,7 +1,6 @@
 function FanfouLib(user, passwd){
   this.username = user;
   this.passwd = passwd;
-  this.info = {}
 }
 
 FanfouLib.URLS = {
@@ -13,13 +12,15 @@ FanfouLib.prototype.ajaxRequest = function(url, callback, context, params, httpM
   if (!httpMethod){
     httpMethod = "GET";
   }
+  if (!params) {
+    params = {};
+  }
   var that = this;
   $.ajax({
       type: httpMethod,
       url: FanfouLib.URLS.API_HOST + url + ".json",
       data: params,
       dataType : "json",
-      timeout: 6000,
       beforeSend : function(xhr){
         var auth = binb2b64(str2binb(that.username + ":"+that.passwd));
         xhr.setRequestHeader("Authorization", "Basic " + auth);
@@ -35,21 +36,45 @@ FanfouLib.prototype.ajaxRequest = function(url, callback, context, params, httpM
 
 FanfouLib.prototype.getSelfInfo = function(){
   var that = this;
-  //个人信息
   this.ajaxRequest("account/verify_credentials", function(success, data){
     if (success){
-      console.log(data);
-      FanfouLib.info = data; 
     }
   });
 }
 
-FanfouLib.prototype.tweet = function(callback, msg){
+FanfouLib.prototype.tweet = function(callback, msg, replyId){
   params = {status : msg};
+  if (replyId){
+    params.in_reply_to_status_id = replyId
+  }
   this.ajaxRequest("statuses/update", callback, null, params, "POST");
 }
 
-FanfouLib.prototype.friendsTimeline = function(callback, context, count, page, sinceId, maxId){
+FanfouLib.prototype.retweet = function(callback, msg, repostId){
+  params = {status : msg};
+  if (repostId){
+    params.repost_status_id = repostId;
+  }
+  this.ajaxRequest("statuses/update", callback, null, params, "POST");
+}
+
+FanfouLib.prototype.destroy = function(callback, id){
+  this.ajaxRequest("statuses/destroy/" + id, callback, null, null, "POST");
+}
+
+FanfouLib.prototype.destroyDM = function(callback, id){
+  this.ajaxRequest("direct_messages/destroy/" + id, callback, null, null, "POST");
+}
+
+FanfouLib.prototype.favorite = function(callback, id){
+  this.ajaxRequest("favorites/create/" + id, callback, null, null, null, "POST"); 
+}
+
+FanfouLib.prototype.unfavorite = function(callback, id){
+  this.ajaxRequest("favorites/destroy/" + id, callback, null, null, null, "POST");
+}
+
+FanfouLib.prototype.timeline = function(path, callback, context, count, page, sinceId, maxId){
   var params = {};
   if (count)
     params.count = count;
@@ -63,6 +88,5 @@ FanfouLib.prototype.friendsTimeline = function(callback, context, count, page, s
     params.maxId = maxId
 
   params["format"] = "html";
-
-  this.ajaxRequest("statuses/friends_timeline", callback, context, params);
+  this.ajaxRequest(path, callback, context, params);
 }

@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" type="text/css" href="css/global.css" />
     <script type="text/javascript" src="js/jquery.js"></script>
     <script type="text/javascript" src="js/jquery-ui-custom.js"></script>
+    <script type="text/javascript" src="js/persistence.js"></script>
+    <script type="text/javascript" src="js/options_backend.js"></script>
     <script type="text/javascript" src="js/fanfou_lib.js"></script>
     <script type="text/javascript">
+        var MAX_TWEET_SIZE = 140;
         $.fn.hoverFor = function(time, mainCallback, startingCallback, abortCallback) {
           return this.each(function(){
             var _this = this, timeoutHandle, triggerFired = false;
@@ -36,7 +40,6 @@
         };
 
       var FanfouManager = chrome.extension.getBackgroundPage().FanfouManager;
-      var FanfouConst = chrome.extension.getBackgroundPage().FanfouConstants;
       var loadingNewTweets = false;
       Paginator = {
         needsMore: false,
@@ -129,7 +132,7 @@
           function() {
             //Starting countdown to read
             $(this).animate({
-              backgroundColor: '#ee7'
+              backgroundColor: '#D5EDF1'
             }, 2000);
           },
           function() {
@@ -233,7 +236,7 @@
 
       function textareaChanged(){
           var el = $("#compose_tweet_area textarea");
-          var availableChars = FanfouConst.MAX_TWEET_SIZE - el.val().length;
+          var availableChars = MAX_TWEET_SIZE - el.val().length;
           var charsLeftEl = $("#compose_tweet_area .chars_left");
           charsLeftEl.text(availableChars);
           if(availableChars < 0) {
@@ -290,7 +293,7 @@
 
         FanfouManager.registerNewTweetsCallback(newTweetsAvailable);
         textareaChanged();
-        replaceUsername();
+        //replaceUsername();
 
         //tabs
         var _onclick = function(e){
@@ -378,7 +381,7 @@
         <div id="tabs">
             <ul>
               <li class="current" id="timeline-click"><a href="javascript:;" ><span>首页</span></a></li>
-              <li id="timeline_mentions-click"><a href="javascript:;"><span>memtions</span></a></li>
+              <li id="timeline_mentions-click"><a href="javascript:;"><span>@我的</span></a></li>
               <li id="timeline_dm-click"><a href="javascript:;"><span>私信</span></a></li>
             </ul>
             <div class="container" id="timeline"></div>

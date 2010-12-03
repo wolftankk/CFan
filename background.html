@@ -3,17 +3,17 @@
     <script type="text/javascript" src="js/jquery.js"></script>
     <script type="text/javascript" src="js/sha1.js"></script>
     <script type="text/javascript" src="js/icon_creator.js"></script>
+    <script type="text/javascript" src="js/persistence.js"></script>
+    <script type="text/javascript" src="js/options_backend.js"></script>
     <script type="text/javascript" src="js/fanfou_lib.js"></script>
   </head>
   <body>
   <script type="text/javascript">
-    var FanfouConstants = {
-      MAX_CACHED_ELEMENTS: 50,
-      WAIT_TIME_UNTIL_REFETCH: 60000,
-      TWEETS_PER_PAGE: 10,
-      MAX_TWEET_SIZE: 140
-    }
-    
+    $.ajaxSetup({
+      timeout: OptionsBackend.get("timeout")
+    })
+    var MAX_TWEET_SIZE = 140;
+
     var FanfouManager = {
         tweetsCache: [],
         newTweetsCache: [],
@@ -44,6 +44,8 @@
           var title = size + " 条新信息";
           chrome.browserAction.setTitle({title: title});
           chrome.browserAction.setIcon({imageData: IconCreator.paintIcon(this.iconImg, "#9c2e2e")});
+          chrome.browserAction.setBadgeText({text : size + ""});
+          chrome.browserAction.setBadgeBackgroundColor({color : [156, 46, 46, 255]})
         },
         onFetchNew: function(success, tweets, status, context){
             var that = this;
@@ -51,7 +53,7 @@
               this.setError(status);
               this.timerId = setTimeout(function(){
                 that.fetchNewTweets.call(that);
-              }, FanfouConstants.WAIT_TIME_UNTIL_REFETCH);
+              }, OptionsBackend.get("home_refresh_interval"));
               return;
             }
             this.setError(null);
@@ -66,7 +68,7 @@
                   this.newTweetsCallback(this.newTweetsCache.length);
                 }catch(e){ }
             }
-            this.timerId = setTimeout(function(){ that.fetchNewTweets.call(that); }, FanfouConstants.WAIT_TIME_UNTIL_REFETCH);
+            this.timerId = setTimeout(function(){ that.fetchNewTweets.call(that); }, OptionsBackend.get("home_refresh_interval"));
         },
         onFetch : function(success, tweets, status, context){
           if (!success){
@@ -135,17 +137,17 @@
             usingMaxId: !!maxId
           }
           var that = this;
-          ffBackend.friendsTimeline(function(success, tweets, status, context){
+          ffBackend.timeline("statuses/friends_timeline", function(success, tweets, status, context){
             that.onFetch.call(that, success, tweets, status, context);    
-          }, context, FanfouConstants.TWEETS_PER_PAGE, null, null, maxId);
+          }, context, OptionsBackend.get("tweets_per_page"), null, null, maxId);
         },
         cleanUpCache : function(){
             var len = this.tweetsCache.length;
-            if (len <= FanfouConstants.MAX_CACHED_ELEMENTS){
+            if (len <= OptionsBackend.get("max_cached_tweets")){
                 return;
             }
             var c = len - 1;
-            for (; c >= FanfouConstants.MAX_CACHED_ELEMENTS; --c){
+            for (; c >= OptionsBackend.get("max_cached_tweets"); --c){
               if (!this.isTweetRead(this.tweetsCache[c].id)){
                 break;
               }
@@ -184,7 +186,7 @@
             }
 
             var that = this;
-            ffBackend.friendsTimeline(function(success, tweets, status, context){
+            ffBackend.timeline("statuses/friends_timeline", function(success, tweets, status, context){
               that.onFetchNew.call(that, success, tweets, status, context);    
             }, null, null, null, lastId);
         }

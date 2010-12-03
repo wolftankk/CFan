@@ -1,10 +1,16 @@
 OptionsBackend = {
   defaultOptions : {
     home_refresh_interval: 90*1000,
+    memtions_refresh_interval: 150 * 1000,
+    dms_refresh_interval : 150 * 1000,
+    tweets_per_page : 10,
+    max_cached_tweets : 30,
 
-    microblogging_service: "fanfou",
-    base_url : "http://api2.fanfou.com",
-    tweets_notification_style: 'desktop',
+    request_timeout : 6000,
+    
+    home_color : "#9c2e2e"
+    //memtions_color : "",
+    //dms_color : "#7f870b",
   },
   cachedOptions: null,
   optionsData: Persistence.options(),
