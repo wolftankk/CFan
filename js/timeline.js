@@ -1,4 +1,5 @@
 function Timeline(timelineid, manager, recheckTime){
+  console.log(recheckTime)
   this.timelineId = timelineid;
   this.manager = manager;
   this.recheckTime = recheckTime;
@@ -9,10 +10,9 @@ function Timeline(timelineid, manager, recheckTime){
   this.currentError = null;
   this.currentCallback = null;
   this.currentScroll = 0;
-  this.firstRun = false;
-    
-  console.log(this.manager)
-
+  this.firstRun = true;
+  this.timelineId = timelineid;
+   
   switch (timelineid){
     case 'home':
       this.timelinePath = 'statuses/friends_timeline';
@@ -44,6 +44,7 @@ Timeline.prototype.onFetchNew = function(success, tweets, status, context){
     if (context.onFinish){
       context.onFinish(0)
     }
+	console.log("onFetchNew")
     this.timerId = setTimeout(function(){ that.fetchNewTweets.call(that) }, this.recheckTime);
     return;
   }
@@ -54,22 +55,22 @@ Timeline.prototype.onFetchNew = function(success, tweets, status, context){
     this.newTweetsCache.unshift(tweets[t]);
     var tid = tweets[t].id;
     if (context.onFinish){
-      this.manager.readTweets[tid];
+      this.manager.readTweet(tid);
     }else{
       if (!this.manager.readTweets[tid]){
         ++unreadLength;
         this.manager.unreadTweets[tid] = true;
       }
     }
-    
-    if (tweets.length > 0 ){
-      this.manager.notifyNewTweets(this.timelineId, this.newTweetsCache.length, unreadLength);
-    }
-    if (context.onFinish){
-      context.onFinish(tweets.length);
-    }
-    this.timerId = setTimeout(function(){ that.fetchNewTweets.call(that); }, this.recheckTime);
-  }
+   } 
+   if (tweets.length > 0 ){
+     this.manager.notifyNewTweets(this.timelineId, this.newTweetsCache.length, unreadLength);
+   }
+   if (context.onFinish){
+     context.onFinish(tweets.length);
+   }
+  
+  this.timerId = setTimeout(function(){ that.fetchNewTweets.call(that); }, this.recheckTime);
 }
 
 Timeline.prototype.fetchNewTweets = function(callback){
@@ -104,14 +105,14 @@ Timeline.prototype.onFetch = function(success, tweets, status, context){
   if (context.usingMaxId){
     t = 1;
   }
-  for (; t < tweets.length; ++i){
+  for (; t < tweets.length; ++t){
     this.tweetsCache.push(tweets[t]);
   }
   this.currentCallback(this.tweetsCache, this.timelineId);
   this.currentCallback = null;
-  
+  console.log("onFetch")
   if (this.firstRun){
-    this.firstRun - false;
+    this.firstRun = false;
     this.fetchNewTweets();
   }
 }
@@ -126,6 +127,7 @@ Timeline.prototype.giveMeTweets = function(callback, syncNew, cacheOnly){
     var oldCallback = this.manager.newTweetsCallback;
     var that = this;
     this.currentCallback = callback;
+    this.manager.newTweetsCallback = null;
     var onFinishCallback = function(){
       var tweetsCallback = that.currentCallback;
       that.currentCallback = null;
@@ -137,6 +139,7 @@ Timeline.prototype.giveMeTweets = function(callback, syncNew, cacheOnly){
     this.fetchNewTweets(onFinishCallback);
     return;
   }
+  console.log("giveMe")
   if (cacheOnly && !this.firstRun){
     if (this.currentScroll == 0){
       this.cleanUpCache();
@@ -153,12 +156,10 @@ Timeline.prototype.giveMeTweets = function(callback, syncNew, cacheOnly){
   var context = {
     usingMaxId: !!maxId
   }
-  /*
   var that = this;
   this.manager.ffBackend.timeline(this.timelinePath, function(success, tweets, status, context){
     that.onFetch.call(that, success, tweets, status, context) 
   }, context, OptionsBackend.get("tweets_per_page"), null, null, maxId);
-  */
 }
 
 Timeline.prototype.cleanUpCache = function(){

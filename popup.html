@@ -56,7 +56,69 @@
       }
 
       var Composer = {
-
+          replyId : null,
+          reply : function(node){
+              Composer.showComposeArea(true);
+              var el = $("#compose_tweet_area textarea");
+              var user = $(".user", node).text();
+              el.val("@" + user + " ");
+              Composer.replyId = $(node).attr('tweetid');
+              Composer.textareaChanged();
+          },
+          showComposeArea : function(showOnly){
+            if(!$("#compose_tweet_area").is(':visible')) {
+              $("#compose_tweet_area").show();
+              $("#compose_tweet img").attr('src', 'images/arrow_up.gif');
+              $("#compose_tweet_area textarea").focus();
+            } else if(!showOnly) {
+              $("#compose_tweet_area").hide();
+              $("#compose_tweet img").attr('src', 'images/arrow_down.gif');
+              FanfouManager.saveMessage = "";
+              FanfouManager.isComposing = false;
+            }
+          },
+          textareaChanged : function(){
+              var el = $("#compose_tweet_area textarea");
+              FanfouManager.saveMessage = el.val();
+              var availableChars = MAX_TWEET_SIZE - el.val().length;
+              var charsLeftEl = $("#compose_tweet_area .chars_left");
+              charsLeftEl.text(availableChars);
+              if(availableChars < 0) {
+                charsLeftEl.css('color', 'red');
+                $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
+              } else {
+                charsLeftEl.css('color', 'black');
+                $("#compose_tweet_area input[type='button']").removeAttr("disabled");
+              }
+          },
+          sendTweet : function(){
+            $("#loading").show();
+            $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
+            $("#compose_tweet_area textarea").attr("disabled", "disabled");
+            FanfouManager.postTweet(function(success, data, status){
+                $("#loading").hide();
+                $("#compose_tweet_area input[type='button']").removeAttr("disabled");
+                $("#compose_tweet_area textarea").removeAttr("disabled");
+                if (success){
+                  var textarea = $("#compose_tweet_area textarea")
+                  var msg = textarea.val();
+                  textarea.val("");
+                  Composer.replyId = null;
+                  Composer.textareaChanged();
+                  Composer.showComposeArea();
+                  loadTimeline(true, "home");
+                }else{
+                }
+            }, $("#compose_tweet_area textarea").val(), Composer.replyId);
+          },
+          retweet : function(node){
+              Composer.showComposeArea(true);
+              var el = $("#compose_tweet_area textarea");
+              var user = $(".user", node).text();
+              var msg = $(".text", node).text();
+              el.val("转 @" + user + " " + msg);
+              Composer.textareaChanged();
+          }
       }
 
       function setError(msg, tryfunc){
@@ -71,46 +133,44 @@
         $("#loading").hide();
         if (tweets){
               Paginator.needsMore = false;
-              assemblyTweets(tweets);
+              assemblyTweets(tweets, timelineId);
         }else{
            showError('Unexpected error "' + chrome.extension.getBackgroundPage().FanfouManager.currentError + '" during communication.', 'loadTimeline');
         }
         loadingNewTweets = false;
       }
 
-      function assemblyTweets(tweets){
-        $("#timeline").html("");
+      function assemblyTweets(tweets, timelineId){
+        var container = $("#timeline_" + timelineId);
+        container.empty();
         for (var c = 0; c < tweets.length; ++c){
-          $("#timeline").append(Renderer.renderTweet(tweets[c]))
+          container.append(Renderer.renderTweet(tweets[c]))
         }
 
         for(var unreadId in FanfouManager.unreadTweets) {
           $("#tweet_" + unreadId).addClass('unread');
         }
-        
 
-        $(".tweet.unread").hoverFor(2000,
+        $(".tweet.unread").hoverFor(1000,
           function() {
-            //Hovering for <time> seconds, let's read it.
             FanfouManager.readTweet(this.id.split('_')[1]);
             $(this).removeClass('unread');
+            $(this).attr("style", "");
           },
           function() {
-            //Starting countdown to read
             $(this).animate({
               backgroundColor: '#D5EDF1'
-            }, 2000);
+            }, 1000);
           },
           function() {
-            //Countdown aborted
             $(this).stop();
-            $(this).css('background-color', '#C1E3EB');
+            $(this).css("style", "");
           }
         );
-
       }
 
-      function loadTimeline(force){
+      function loadTimeline(force, forcedTimeline){
+        console.log("loadtime");
         loadingNewTweets = true;
         $("#loading").show();
         if (force){
@@ -120,36 +180,12 @@
         if (Paginator.needsMore){
             cacheOnly = false;
         }
-
-        FanfouManager.giveMeTweets(onTimelineRetrieved, force, cacheOnly);
+        if (!forcedTimeline){
+          forcedTimeline = FanfouManager.currentTimeline;
+        }
+        FanfouManager.giveMeTweets(forcedTimeline, onTimelineRetrieved, force, cacheOnly);
       }
       
-      function sendTweet(){
-        $("#loading").show();
-        $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
-        $("#compose_tweet_area textarea").attr("disabled", "disabled");
-        FanfouManager.postTweet(function(success, data, status){
-            $("#loading").hide();
-            $("#compose_tweet_area input[type='button']").removeAttr("disabled");
-            $("#compose_tweet_area textarea").removeAttr("disabled");
-            if (success){
-              $("#compose_tweet_area textarea").val("");
-              textareaChanged();
-              showComposeArea();
-              loadTimeline(true);
-            }else{
-            }
-        }, $("#compose_tweet_area textarea").val());
-      }
-      
-      function retweet(node){
-          showComposeArea(true);
-          var el = $("#compose_tweet_area textarea");
-          var user = $(".user", node).text();
-          var msg = $(".text", node).text();
-          el.val("转 @" + user + " " + msg);
-          textareaChanged();
-      }
 
       function clearUserData(){
         if(!$("input[name='remember']").is(":checked")) {
@@ -179,44 +215,17 @@
 
       function signout(){
         localStorage.removeItem("logged");
-        chrome.extension.getBackgroundPage().signout();
+        FanfouManager.signout();
         window.close();
       }
 
-      function reply(node){
-          showComposeArea(true);
-          var el = $("#compose_tweet_area textarea");
-          var user = $(".user", node).text();
-          el.val("@" + user + " ");
-          textareaChanged();
-      }
-      
-      function showComposeArea(showOnly){
-        if(!$("#compose_tweet_area").is(':visible')) {
-          $("#compose_tweet_area").show();
-          $("#compose_tweet img").attr('src', 'images/arrow_up.gif');
-          $("#compose_tweet_area textarea").focus();
-        } else if(!showOnly) {
-          $("#compose_tweet_area").hide();
-          $("#compose_tweet img").attr('src', 'images/arrow_down.gif');
-        }
-      }
-
-      function textareaChanged(){
-          var el = $("#compose_tweet_area textarea");
-          var availableChars = MAX_TWEET_SIZE - el.val().length;
-          var charsLeftEl = $("#compose_tweet_area .chars_left");
-          charsLeftEl.text(availableChars);
-          if(availableChars < 0) {
-            charsLeftEl.css('color', 'red');
-            $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
-          } else {
-            charsLeftEl.css('color', 'black');
-            $("#compose_tweet_area input[type='button']").removeAttr("disabled");
+      function newTweetsAvailable(count, unreadCount, timelineId){
+        var currentTimeline = FanfouManager.currentTimeline;
+        if (timelineId != currentTimeline){
+          if (unreadCount == 0){
+            return;
           }
-      }
-      
-      function newTweetsAvailable(count){
+        }
         var text = "新增" + count + " 条最新消息";
         $("#update_tweets").text(text);
         $("#update_tweets").fadeIn();
@@ -225,6 +234,7 @@
       function loadNewTweets(){
         Paginator.firstPage();
         FanfouManager.updateNewTweets();
+        //update tab
         $("#update_tweets").fadeOut();
         loadTimeline();
       }
@@ -232,6 +242,23 @@
       function replaceUsername(){
         var nickname = chrome.extension.getBackgroundPage().getUserNickName()
         $("#timeline_mentions-click span").text("@nickname");
+      }
+
+      function preLoadTimeline(){
+        var currentTimeline = FanfouManager.currentTimeline;
+        FanfouManager.eachTimeline(function(timeline){
+          var timelineId = this;
+          var newTweetsInfo = FanfouManager.newTweetsCount(timelineId);
+          var newTweetsCount = newTweetsInfo[0];
+          if (newTweetsCount > 0){
+            if (currentTimeline == timelineId && timeline.currentScroll == 0){
+              FanfouManager.updateNewTweets();
+              }else{
+                newTweetsAvailable(newTweetsCount, newTweetsInfo[0], timelineId);
+              }
+          }
+        });
+        loadTimeline();
       }
       
       $(function(){
@@ -250,22 +277,16 @@
           }
         }else{
           $("#workspace").show();
-          if (FanfouManager.newTweetsCount() > 0){
-            if (FanfouManager.currentPage == 1){
-              FanfouManager.updateNewTweets();
-            }else{
-              newTweetsAvailable(FanfouManager.newTweetsCount());
-            }
-          }
-          //loadTimeline();
+          preLoadTimeline();
         }
-        
-        //FanfouManager.registerNewTweetsCallback(newTweetsAvailable);
-        //textareaChanged();
-        //replaceUsername();
 
+        if (FanfouManager.isComposing){
+          Composer.showComposeArea(true, true);
+          $("#compose_tweet_area textarea").val(tweetManager.saveMessage || '');
+        }
+        FanfouManager.registerNewTweetsCallback(newTweetsAvailable);
+        Composer.textareaChanged();
         //tabs
-        /*
         var _onclick = function(e){
           if ($(this).attr("class") == "current"){
             return false;
@@ -280,38 +301,42 @@
           var __t;
           switch (e.data.ci){
             case 0:
-                __t = "#timeline";
+                __t = "#timeline_home";
                 break;
             case 1:
                 __t = "#timeline_mentions";
                 break;
             case 2:
-                __t = "#timeline_dm";
+                __t = "#timeline_dms";
                 break;
             default:
-                __t = "#timeline";
+                __t = "#timeline_home";
                 break;
             }
             $(__t).show();
+            FanfouManager.currentTimeline = __t.split("_")[1];
+            $("#update_tweets").hide();
+            preLoadTimeline();
         }
         $("#tabs ul li").each(function(i){
             $(this).bind("click", {ci : i}, _onclick); 
         });
-
-        if (FanfouManager.currentScroll != 0){
-            $("#timeline").scrollTop(FanfouManager.currentScroll);
-        }
-        $("#timeline").scroll(function(e){
+        FanfouManager.eachTimeline(function(timeline){
+          var timelineId = this;
+          var c = $("#timeline_" + timelineId);
+          c.scrollTop(timelineId.currentScroll);
+          c.scroll(function(e){
             var $this = $(this);
-            var s = 50;
-            FanfouManager.currentScroll = $this.scrollTop();
+            var t = 50;
+            timeline.currentScroll = $this.scrollTop();
             var maxScroll = $this.attr("scrollHeight") - $this.height();
-            if (maxScroll - $this.scrollTop < s){
-                if (!loadingNewTweets){
-                    Paginator.nextPage();
-                }
+            if (maxScroll - $this.scrollTop()){
+              if (!loadingNewTweets){
+                Paginator.nextPage();
+              }
             }
-        })*/
+          })
+        })
       });
     </script>
   </head>
@@ -330,14 +355,14 @@
 
     <div id="workspace" style="display:none;">
       <div id="compose_tweet_area" style="display:none;">
-        <textarea rows="4" onkeyup="textareaChanged();" onblur="textareaChanged();"></textarea>
+        <textarea rows="4" onkeyup="Composer.textareaChanged();" onblur="Composer.textareaChanged();"></textarea>
         <div class="footer">
-          <input type="button" value="发送" onclick="sendTweet();"/>
+          <input type="button" value="发送" onclick="Composer.sendTweet();"/>
           <span class="chars_left"></span>
         </div>
       </div>
 
-      <div id="compose_tweet" onclick="showComposeArea()">
+      <div id="compose_tweet" onclick="Composer.showComposeArea()">
         <img class="left" src="images/arrow_down.gif"/>
         你在做什么?
         <img class="right" src="images/arrow_down.gif"/>
@@ -350,13 +375,13 @@
 
         <div id="tabs">
             <ul>
-              <li class="current" id="timeline-click"><a href="javascript:;" ><span>首页</span></a></li>
+              <li class="current" id="timeline_home-click"><a href="javascript:;" ><span>首页</span></a></li>
               <li id="timeline_mentions-click"><a href="javascript:;"><span>@我的</span></a></li>
-              <li id="timeline_dm-click"><a href="javascript:;"><span>私信</span></a></li>
+              <li id="timeline_dms-click"><a href="javascript:;"><span>私信</span></a></li>
             </ul>
-            <div class="container" id="timeline"></div>
+            <div class="container" id="timeline_home"></div>
             <div class="container" style="display:none;" id="timeline_mentions">Coming Soon</div>
-            <div class="container" style="display:none;" id="timeline_dm">Coming Soon</div>
+            <div class="container" style="display:none;" id="timeline_dms">Coming Soon</div>
         </div>
     </div>
   </body>

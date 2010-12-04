@@ -28,7 +28,6 @@
         this.timelines["dms"] = new Timeline("dms", this, OptionsBackend.get("dms_refresh_interval"));
 
         var that = this
-
         this.ffBackend = new FanfouLib(user, passwd, function(){
             that.giveMeTweets.call(that, "home", function(){});
             that.giveMeTweets.call(that, "mentions", function(){});
@@ -41,7 +40,7 @@ FanfouManager.prototype.eachTimeline = function(callback){
     callback.call(id, this.timelines[id]);
   }
 }
-FanfouManager.prototype.updateAlter = function(){
+FanfouManager.prototype.updateAlert = function(){
   var unreadNewCount = 0;
   this.eachTimeline(function(timeline){
     unreadNewCount += timeline.newTweetsCount()[1];      
@@ -68,8 +67,7 @@ FanfouManager.prototype.notifyNewTweets = function(timelineId, size, unreadSize)
   try{
     this.newTweetsCallback(size, unreadSize, timelineId);
   }catch(e){}
-
-  this.updateAlter();
+  this.updateAlert();
 }
 FanfouManager.prototype.postTweet = function(callback, msg, replyId){
   return this.ffBackend.tweet(callback, msg, replyId);
@@ -82,7 +80,7 @@ FanfouManager.prototype.newTweetsCount = function(timelineId){
 }
 FanfouManager.prototype.updateNewTweets = function(){
   this.timelines[this.currentTimeline].updateNewTweets();
-  this.updateAlter();
+  this.updateAlert();
 }
 FanfouManager.prototype.getCurrentTimeline = function(){
   return this.timelines[this.currentTimeline];
@@ -92,14 +90,22 @@ FanfouManager.prototype.currentError = function(){
 }
 FanfouManager.prototype.stopAll = function(){
   this.eachTimeline(function(timeline){
-    thimeline.stopTimer();
+    timeline.stopTimer();
     delete timeline;
   })
 }
+FanfouManager.prototype.clear = function(){
+	this.unreadTweets = {}
+    this.readTweets = {};
+    this.newTweetsCallback = null;
+    this.saveMessage =  '';
+    this.isComposing = false
+    this.currentTimeline = "home"
+}
 FanfouManager.prototype.signout = function(){
   this.stopAll();
+  this.clear();
   FanfouManager.instance = null;
-  window.close();
 }
 
     function signin(user, passwd){

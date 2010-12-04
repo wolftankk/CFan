@@ -1,10 +1,10 @@
 function FanfouLib(user, passwd, callback){
   this.username = user;
   this.passwd = passwd;
-  this.getSelfInfo();
+  //this.getSelfInfo();
   
   if (callback){
-    callback();
+    setTimeout(function(){callback()}, 10);
   }
 }
 
@@ -92,7 +92,7 @@ FanfouLib.prototype.timeline = function(path, callback, context, count, page, si
 
   if (maxId)
     params.maxId = maxId
-
   params["format"] = "html";
+
   this.ajaxRequest(path, callback, context, params);
 }

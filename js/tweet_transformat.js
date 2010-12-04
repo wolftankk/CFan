@@ -47,6 +47,9 @@ var Renderer = {
     }
   },
   renderTweet: function(tweet){
+    if (!tweet.user){
+      tweet.user = tweet.sender
+    }
     var user = tweet.user.id;
     var nickName = tweet.user.screen_name;
     var tweetId = tweet.id;
