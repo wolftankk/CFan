@@ -1,7 +1,7 @@
 function FanfouLib(user, passwd, callback){
   this.username = user;
   this.passwd = passwd;
-  //this.getSelfInfo();
+  this.getSelfInfo();
   
   if (callback){
     setTimeout(function(){callback()}, 10);
@@ -43,7 +43,8 @@ FanfouLib.prototype.getSelfInfo = function(){
   var that = this;
   this.ajaxRequest("account/verify_credentials", function(success, data){
     if (success){
-      console.log(data);
+      //save
+      localStorage.id = data.id; 
     }
   });
 }
@@ -73,11 +74,11 @@ FanfouLib.prototype.destroyDM = function(callback, id){
 }
 
 FanfouLib.prototype.favorite = function(callback, id){
-  this.ajaxRequest("favorites/create/" + id, callback, null, null, null, "POST"); 
+  this.ajaxRequest("favorites/create/" + id, callback, null, null, "POST"); 
 }
 
 FanfouLib.prototype.unfavorite = function(callback, id){
-  this.ajaxRequest("favorites/destroy/" + id, callback, null, null, null, "POST");
+  this.ajaxRequest("favorites/destroy/" + id, callback, null, null, "POST");
 }
 
 FanfouLib.prototype.timeline = function(path, callback, context, count, page, sinceId, maxId){

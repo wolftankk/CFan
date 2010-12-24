@@ -69,9 +69,26 @@ FanfouManager.prototype.notifyNewTweets = function(timelineId, size, unreadSize)
   }catch(e){}
   this.updateAlert();
 }
-FanfouManager.prototype.postTweet = function(callback, msg, replyId){
-  return this.ffBackend.tweet(callback, msg, replyId);
+FanfouManager.prototype.postTweet = function(callback, msg, replyId, postStatus){
+  if (postStatus == "retweet"){
+    return this.ffBackend.retweet(callback, msg, replyId);
+  }else{
+    return this.ffBackend.tweet(callback, msg, replyId);
+  }
 }
+
+FanfouManager.prototype.favorite = function(callback, id, isNeed){
+  if (isNeed){
+    return this.ffBackend.favorite(callback, id);
+  }else{
+    return this.ffBackend.unfavorite(callback, id);
+  }
+}
+
+FanfouManager.prototype.trashTweet = function(callback, id){
+  return this.ffBackend.destroy(callback, id);
+}
+
 FanfouManager.prototype.giveMeTweets = function(timelineId, callback, syncNew, cacheOnly){
   return this.timelines[timelineId].giveMeTweets(callback, syncNew, cacheOnly);
 }
@@ -95,7 +112,7 @@ FanfouManager.prototype.stopAll = function(){
   })
 }
 FanfouManager.prototype.clear = function(){
-	this.unreadTweets = {}
+    this.unreadTweets = {}
     this.readTweets = {};
     this.newTweetsCallback = null;
     this.saveMessage =  '';

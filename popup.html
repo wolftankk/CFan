@@ -57,12 +57,14 @@
 
       var Composer = {
           replyId : null,
-          reply : function(node){
+          postSatus : "",
+          reply : function(tweet){
               Composer.showComposeArea(true);
+              var user = tweet.user.name;
               var el = $("#compose_tweet_area textarea");
-              var user = $(".user", node).text();
               el.val("@" + user + " ");
-              Composer.replyId = $(node).attr('tweetid');
+              Composer.postSatus = "reply";
+              Composer.replyId = tweet.id;
               Composer.textareaChanged();
           },
           showComposeArea : function(showOnly){
@@ -104,21 +106,49 @@
                   var msg = textarea.val();
                   textarea.val("");
                   Composer.replyId = null;
+                  Composer.postSatus = "";
                   Composer.textareaChanged();
                   Composer.showComposeArea();
-                  loadTimeline(true, "home");
+                  loadTimeline(true, FanfouManager.currentTimeline);
                 }else{
                 }
-            }, $("#compose_tweet_area textarea").val(), Composer.replyId);
+            }, $("#compose_tweet_area textarea").val(), Composer.replyId, Composer.postSatus);
           },
-          retweet : function(node){
+          retweet : function(tweet){
               Composer.showComposeArea(true);
               var el = $("#compose_tweet_area textarea");
-              var user = $(".user", node).text();
-              var msg = $(".text", node).text();
-              el.val("转 @" + user + " " + msg);
+              var user = tweet.user.name;
+              $("#tmphandler").empty();
+              var msg = $("#tmphandler").html(tweet.text).text();
+              el.text("转 @" + user + " " + msg);
+              Composer.replyId = tweet.id;
+              Composer.postSatus = "retweet";
               Composer.textareaChanged();
-          }
+          },
+          favorite : function(tweet, isNeed){
+              var tid = tweet.id;
+              FanfouManager.favorite(function(success, data, status){
+                if (success){
+                  var img = "";
+                  if (data.favorited){
+                    img = "images/star.png";
+                  }else{
+                    img = "images/star_grey.png";
+                  }
+                  $("#tweet_" + tid + " #favorite").attr("src", img);
+                  loadTimeline(true, FanfouManager.currentTimeline);
+                } 
+              }, tid, isNeed); 
+            },
+            trash : function(tweet){
+                var tid = tweet.id;
+                FanfouManager.trashTweet(function(success, data, status){
+                    if (success){
+                      $("#tweet_"+tid).hide();
+                      loadTimeline(true, FanfouManager.currentTimeline);
+                    }
+                }, tid);
+            }
       }
 
       function setError(msg, tryfunc){
@@ -277,7 +307,7 @@
           }
         }else{
           $("#workspace").show();
-          //preLoadTimeline();
+          preLoadTimeline();
         }
 
         if (FanfouManager.isComposing){
@@ -329,6 +359,7 @@
     </script>
   </head>
   <body>
+    <div id="tmphandler" style="display:none;"></div>
     <!--登录-->
     <div id="signin" style="display:none;">
       <h1>登录饭否</h1>
