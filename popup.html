@@ -277,7 +277,7 @@
           }
         }else{
           $("#workspace").show();
-          preLoadTimeline();
+          //preLoadTimeline();
         }
 
         if (FanfouManager.isComposing){
@@ -286,40 +286,28 @@
         }
         FanfouManager.registerNewTweetsCallback(newTweetsAvailable);
         Composer.textareaChanged();
-        //tabs
+
         var _onclick = function(e){
           if ($(this).attr("class") == "current"){
             return false;
           }
           $("#tabs ul li").each(function(){
-            $(this).removeClass("current");    
+            $(this).removeClass("current");
             var id = $(this).attr("id");
             id = id.replace("-click", "");
-            $("#" + id).hide();
+            $("#"+id).hide();
           });
-          $(this).addClass("current");
-          var __t;
-          switch (e.data.ci){
-            case 0:
-                __t = "#timeline_home";
-                break;
-            case 1:
-                __t = "#timeline_mentions";
-                break;
-            case 2:
-                __t = "#timeline_dms";
-                break;
-            default:
-                __t = "#timeline_home";
-                break;
-            }
-            $(__t).show();
-            FanfouManager.currentTimeline = __t.split("_")[1];
-            $("#update_tweets").hide();
-            preLoadTimeline();
+
+          var currentTab = $(this);
+          currentTab.addClass("current");
+          var currentContainer = currentTab.attr("id").replace("-click", ""); 
+          $("#" + currentContainer).show();// show tab container page
+          FanfouManager.currentTimeline = currentContainer.split("_")[1]; 
+          $("#update_tweets").hide();
+          preLoadTimeline();
         }
-        $("#tabs ul li").each(function(i){
-            $(this).bind("click", {ci : i}, _onclick); 
+        $("#tabs ul li").each(function(){
+            $(this).bind("click", _onclick); 
         });
         FanfouManager.eachTimeline(function(timeline){
           var timelineId = this;
@@ -375,9 +363,9 @@
 
         <div id="tabs">
             <ul>
-              <li class="current" id="timeline_home-click"><a href="javascript:;" ><span>首页</span></a></li>
-              <li id="timeline_mentions-click"><a href="javascript:;"><span>@我的</span></a></li>
-              <li id="timeline_dms-click"><a href="javascript:;"><span>私信</span></a></li>
+              <li class="current" id="timeline_home-click"><span>首页</span></li>
+              <li id="timeline_mentions-click"><span>@我的</span></li>
+              <li id="timeline_dms-click"><span>私信</span></li>
             </ul>
             <div class="container" id="timeline_home"></div>
             <div class="container" style="display:none;" id="timeline_mentions">Coming Soon</div>
