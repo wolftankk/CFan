@@ -283,6 +283,7 @@ a:hover{
     line-height: 23px;
     position: relative;
     bottom: -1px;
+    pointer: cursor;
 }
 
 #tabs li.current{
