@@ -1,6 +1,6 @@
 {
   "name": "稀饭",
-  "version":"0.3",
+  "version":"0.31",
   "description": "Chrome版饭否插件",
   "icons" : {
     "16" : "images/icon-16.png",

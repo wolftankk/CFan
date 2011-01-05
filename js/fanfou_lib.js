@@ -50,7 +50,9 @@ FanfouLib.prototype.getSelfInfo = function(){
 }
 
 FanfouLib.prototype.tweet = function(callback, msg, replyId){
-  params = {status : msg};
+  params = {status : msg,
+            source : 'cfan',
+  };
   if (replyId){
     params.in_reply_to_status_id = replyId
   }

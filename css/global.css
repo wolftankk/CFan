@@ -211,6 +211,24 @@ a:hover{
   outline: inherit;
 }
 
+/*
+#compose_tweet_area input[type="file"] {
+  margin: 2px 0px 2px 0px;
+  padding: 0px;
+  width: 80px;
+  background-color: #eee;
+  border: 1px solid #5b5b5b;
+}
+
+#compose_tweet_area input[type="file"]:hover {
+  outline: 1px solid #6D9DCF;
+}
+
+#compose_tweet_area input[type="file"]:hover:disabled {
+  outline: inherit;
+}
+*/
+
 #compose_tweet img {
   margin-top: 3px;
 }
@@ -255,7 +273,6 @@ a:hover{
 }
 
 #tabs{
-
 }
 
 #tabs a:hover{
@@ -267,16 +284,19 @@ a:hover{
     height: 22px;
     width: 280px;
     padding: 0;
-    margin: 0 auto;
+    margin: 0;
+    margin-left: 30px;
 }
 
 #tabs ul li{
     display: block;
-    width: 80px;
+    width: 60px;
     height: 23px;
     margin-right: 8px;
     border: 1px solid #8FD2DC;
     border-bottom: 0;
+    -webkit-border-top-left-radius: 5px;
+    -webkit-border-top-right-radius: 5px;
     font-size: 11px;
     float:left;
     text-align: center;
