@@ -77,7 +77,8 @@ var Renderer = {
       
     //TODO:
     //$("<a />").html("<img src='images/dm.png' />  ").attr("title", "私信").appendTo($actions);
-    
+   
+    //if dms, favorite = false
     if (tweet.favorited == false){//判断是否已经收藏了
       $("<a />").html("<img src='images/star_grey.png' id='favorite' />  ").attr("title", "收藏").appendTo($actions).click(function(){
         Composer.favorite(tweet, true);
@@ -102,7 +103,14 @@ var Renderer = {
     $("<div />").addClass("text").html(text).appendTo(_container);
     
     var footer = $("<div />").addClass("footer").appendTo(_container);
-    $("<div />").addClass("timestamp").appendTo(footer).text(Renderer.formatTime(tweet.created_at)).attr("title", Renderer.getTimestampAltText(tweet.created_at));
+    var fleft = $("<div />").addClass("fleft").appendTo(footer)
+    fleft.append($("<span />").addClass("timestamp").text(Renderer.formatTime(tweet.created_at)).attr("title", Renderer.getTimestampAltText(tweet.created_at)));
+
+    //if have in_reply_to_status_id
+    if (tweet.in_reply_to_status_id){
+        //click show/hide msg info
+        fleft.append($("<a />").addClass("in_reply_msg").text("查看回复").attr("href", "#"));
+    }
     if (tweet.source){
       $("<div />").addClass("fromsource").appendTo(footer).html("通过"+tweet.source);
     }

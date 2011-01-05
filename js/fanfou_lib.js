@@ -10,7 +10,7 @@ function FanfouLib(user, passwd, callback){
 
 FanfouLib.URLS = {
   BASE: "http://fanfou.com/",
-  API_HOST : "http://api2.fanfou.com/"
+  API_HOST : "http://api.fanfou.com/"
 }
 
 FanfouLib.prototype.ajaxRequest = function(url, callback, context, params, httpMethod){

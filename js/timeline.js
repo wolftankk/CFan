@@ -1,5 +1,5 @@
 function Timeline(timelineid, manager, recheckTime){
-  console.log(recheckTime)
+  //console.log(recheckTime)
   this.timelineId = timelineid;
   this.manager = manager;
   this.recheckTime = recheckTime;
@@ -44,7 +44,6 @@ Timeline.prototype.onFetchNew = function(success, tweets, status, context){
     if (context.onFinish){
       context.onFinish(0)
     }
-	console.log("onFetchNew")
     this.timerId = setTimeout(function(){ that.fetchNewTweets.call(that) }, this.recheckTime);
     return;
   }
@@ -100,17 +99,18 @@ Timeline.prototype.onFetch = function(success, tweets, status, context){
     return;
   }
   this.setError(null);
-
   var t = 0;
   if (context.usingMaxId){
     t = 1;
+    console.log("usingMaxId");
   }
+
+  //maxId获取消息 似乎有问题。 每次maxid都是一样的 是否是api问题导致的
   for (; t < tweets.length; ++t){
     this.tweetsCache.push(tweets[t]);
   }
   this.currentCallback(this.tweetsCache, this.timelineId);
   this.currentCallback = null;
-  console.log("onFetch")
   if (this.firstRun){
     this.firstRun = false;
     this.fetchNewTweets();
@@ -122,7 +122,7 @@ Timeline.prototype.giveMeTweets = function(callback, syncNew, cacheOnly){
       this.currentCallback = callback;
       return;
   }
-
+    
   if (syncNew){
     var oldCallback = this.manager.newTweetsCallback;
     var that = this;
@@ -139,7 +139,6 @@ Timeline.prototype.giveMeTweets = function(callback, syncNew, cacheOnly){
     this.fetchNewTweets(onFinishCallback);
     return;
   }
-  console.log("giveMe")
   if (cacheOnly && !this.firstRun){
     if (this.currentScroll == 0){
       this.cleanUpCache();
@@ -153,6 +152,7 @@ Timeline.prototype.giveMeTweets = function(callback, syncNew, cacheOnly){
   if (this.tweetsCache.length > 0){
     maxId = this.tweetsCache[this.tweetsCache.length - 1].id
   }
+  console.log("maxId",maxId)
   var context = {
     usingMaxId: !!maxId
   }
