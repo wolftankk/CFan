@@ -24,14 +24,14 @@
 
         this.timelines = {};
         this.timelines["home"] = new Timeline("home", this, OptionsBackend.get("home_refresh_interval"));
-        //this.timelines["mentions"] = new Timeline("mentions", this, OptionsBackend.get("memtions_refresh_interval"));
-        //this.timelines["dms"] = new Timeline("dms", this, OptionsBackend.get("dms_refresh_interval"));
+        this.timelines["mentions"] = new Timeline("mentions", this, OptionsBackend.get("memtions_refresh_interval"));
+        this.timelines["dms"] = new Timeline("dms", this, OptionsBackend.get("dms_refresh_interval"));
 
         var that = this
         this.ffBackend = new FanfouLib(user, passwd, function(){
             that.giveMeTweets.call(that, "home", function(){});
-         //   that.giveMeTweets.call(that, "mentions", function(){});
-         //   that.giveMeTweets.call(that, "dms", function(){});
+            that.giveMeTweets.call(that, "mentions", function(){});
+            that.giveMeTweets.call(that, "dms", function(){});
         });
     }
 
