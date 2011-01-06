@@ -92,10 +92,10 @@ FanfouLib.prototype.timeline = function(path, callback, context, count, page, si
     params.page = page;
 
   if (sinceId)
-    params.sinceId = sinceId;
+    params.since_id = sinceId;
 
   if (maxId)
-    params.maxId = maxId
+    params.max_id = maxId
   params["format"] = "html";
 
   this.ajaxRequest(path, callback, context, params);
