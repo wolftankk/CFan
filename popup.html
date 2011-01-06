@@ -41,7 +41,7 @@
          });
         };
 
-      var FanfouManager = null;
+      var FanfouManager = chrome.extension.getBackgroundPage().FanfouManager.instance;
       var loadingNewTweets = false;
       var Paginator = {
         needsMore: false,
@@ -79,7 +79,7 @@
               FanfouManager.isComposing = false;
             }
           },
-          textareaChanged : function(){
+          textareaChanged : function(e){
               var el = $("#compose_tweet_area textarea");
               FanfouManager.saveMessage = el.val();
               var availableChars = MAX_TWEET_SIZE - el.val().length;
@@ -91,6 +91,9 @@
               } else {
                 charsLeftEl.css('color', 'black');
                 $("#compose_tweet_area input[type='button']").removeAttr("disabled");
+                if (e && e.ctrlKey && e.which == 13){
+                    this.sendTweet();
+                }
               }
           },
           sendTweet : function(){
@@ -102,7 +105,7 @@
                 $("#compose_tweet_area input[type='button']").removeAttr("disabled");
                 $("#compose_tweet_area textarea").removeAttr("disabled");
                 if (success){
-                  var textarea = $("#compose_tweet_area textarea")
+                  var textarea = $("#compose_tweet_area textarea");
                   var msg = textarea.val();
                   textarea.val("");
                   Composer.replyId = null;
@@ -161,6 +164,7 @@
 
       function onTimelineRetrieved(tweets, timelineId){
         $("#loading").hide();
+        console.log(tweets)
         if (tweets){
               Paginator.needsMore = false;
               assemblyTweets(tweets, timelineId);
@@ -200,7 +204,6 @@
       }
 
       function loadTimeline(force, forcedTimeline){
-        console.log("loadtime");
         loadingNewTweets = true;
         $("#loading").show();
         if (force){
@@ -293,7 +296,7 @@
       
       $(function(){
         //从后台获取.. 获得是否需要登录
-        FanfouManager = chrome.extension.getBackgroundPage().FanfouManager.instance;
+        //FanfouManager = chrome.extension.getBackgroundPage().FanfouManager.instance;
         if (!FanfouManager){
           $("#signin").show();
           $("input[name='user']").focus();
@@ -339,23 +342,24 @@
         $("#tabs ul li").each(function(){
             $(this).bind("click", _onclick); 
         });
+      });
+      setTimeout(function(){
         FanfouManager.eachTimeline(function(timeline){
           var timelineId = this;
           var c = $("#timeline_" + timelineId);
           c.scrollTop(timelineId.currentScroll);
           c.scroll(function(e){
-            var $this = $(this);
-            var t = 50;
-            timeline.currentScroll = $this.scrollTop();
-            var maxScroll = $this.attr("scrollHeight") - $this.height();
-            if (maxScroll - $this.scrollTop()){
+            var _t = $(this);//tab container
+            var threshold = 50;
+            timeline.currentScroll = _t.scrollTop();
+            var maxScroll = _t.attr("scrollHeight") - _t.height();
+            if (maxScroll - _t.scrollTop() < threshold){
               if (!loadingNewTweets){
                 Paginator.nextPage();
               }
             }
           })
-        })
-      });
+        })}, 0);
     </script>
   </head>
   <body>
@@ -371,10 +375,9 @@
       <input value="开饭了!" type="button" onclick="signin()" />
     </div>
     <div id="error" style="display:none;"></div>
-
     <div id="workspace" style="display:none;">
       <div id="compose_tweet_area" style="display:none;">
-        <textarea rows="4" onkeyup="Composer.textareaChanged();" onblur="Composer.textareaChanged();"></textarea>
+        <textarea rows="4" onkeyup="Composer.textareaChanged(event);" onblur="Composer.textareaChanged();"></textarea>
         <!--<input type="file"/>-->
         <div class="footer">
           <input type="button" value="发送" onclick="Composer.sendTweet();"/>

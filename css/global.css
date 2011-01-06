@@ -71,7 +71,7 @@ a:hover{
 
 
 #workspace{
-  min-width: 370px;
+  min-width: 400px;
   margin: 0 4px;
 }
 
@@ -82,7 +82,7 @@ a:hover{
 
 .tweet {
   -webkit-border-radius: 5px;
-  width: 350px;
+  width: 396px;
   background-color: #89D1E3;
   padding: 2px 4px 2px 4px;
   margin-bottom: 3px;
@@ -104,12 +104,20 @@ a:hover{
   padding: 0px;
 }
 
+.tweet .fleft{
+ margin-top: 2px;
+ float: left;
+}
+
+.tweet .in_reply_msg{
+    margin-left: 5px;
+    font-size: 9px;
+}
+
 .tweet .timestamp {
   font-size: 8px;
   color: #686868;
   font-style: italic;
-  margin-top: 2px;
-  float: left;
 }
 
 .tweet .fromsource{
@@ -313,11 +321,11 @@ a:hover{
 
 #tabs .container{
     border-top: 1px solid #8FD2DC;
-    padding-top: 10px;
+    padding-top: 5px;
     max-height: 400px;
     height: 400px;
     padding-right: 20px;
     overflow: auto;
     overflow-x: hidden;
-    width: 358px;
+    width: 400px;
 }

@@ -20,6 +20,8 @@ FanfouLib.prototype.ajaxRequest = function(url, callback, context, params, httpM
   if (!params) {
     params = {};
   }
+  $.extend(params, {source : 'cfan'});
+  
   var that = this;
   $.ajax({
       type: httpMethod,
@@ -50,8 +52,7 @@ FanfouLib.prototype.getSelfInfo = function(){
 }
 
 FanfouLib.prototype.tweet = function(callback, msg, replyId){
-  params = {status : msg,
-            source : 'cfan',
+  params = {status : msg
   };
   if (replyId){
     params.in_reply_to_status_id = replyId
