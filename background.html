@@ -84,7 +84,9 @@ FanfouManager.prototype.favorite = function(callback, id, isNeed){
     return this.ffBackend.unfavorite(callback, id);
   }
 }
-
+FanfouManager.prototype.showTweet = function(callback, id){
+    return this.ffBackend.showTweet(callback, id);
+}
 FanfouManager.prototype.trashTweet = function(callback, id){
   return this.ffBackend.destroy(callback, id);
 }

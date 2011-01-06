@@ -117,6 +117,23 @@
                 }
             }, $("#compose_tweet_area textarea").val(), Composer.replyId, Composer.postSatus);
           },
+          //显示指定的消息
+          showTweet : function(tweet){
+            var tid = tweet.id;
+            var _c = $("#tweet_" + tid + " .reply_msg_info");
+            if (tweet.in_reply_to_status_id){
+              if (_c.text() != "" || _c.text().length > 0){
+                return;
+              }
+              FanfouManager.showTweet(function(success, data, status){
+                if (success){
+                    _c.append(Renderer.renderTweet(data));
+                    _c.append($("<div class='clear></div>'"));
+                    _c.show();
+                }
+              }, tweet.in_reply_to_status_id);
+            }
+          },
           retweet : function(tweet){
               Composer.showComposeArea(true);
               var el = $("#compose_tweet_area textarea");
@@ -164,7 +181,7 @@
 
       function onTimelineRetrieved(tweets, timelineId){
         $("#loading").hide();
-        console.log(tweets)
+        //console.log(tweets)
         if (tweets){
               Paginator.needsMore = false;
               assemblyTweets(tweets, timelineId);

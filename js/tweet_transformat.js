@@ -10,7 +10,7 @@ var Renderer = {
   },
   getTimestampAltText : function(time){
     var time = Date.parse(time);
-    return new Date(time).getFullYear() + "-" + new Date(time).getMonth() + "-" + new Date(time).getDay() + " " + new Date(time).toLocaleTimeString();
+    return new Date(time).getFullYear() + "-" + (new Date(time).getMonth() + 1) + "-" + new Date(time).getDay() + " " + new Date(time).toLocaleTimeString();
   },
   formatTime : function(time){
     var time = Date.parse(time);
@@ -72,6 +72,7 @@ var Renderer = {
     var $actions = $("<div />").appendTo(topinfo).addClass("actions");
 
     $("<a />").html("<img src='images/reply.png' />  ").attr("title", "回复").click(function(){
+      console.log(tweetId)
       Composer.reply(_container.data("tweet")); 
     }).appendTo($actions)
       
@@ -83,7 +84,7 @@ var Renderer = {
       $("<a />").html("<img src='images/star_grey.png' id='favorite' />  ").attr("title", "收藏").appendTo($actions).click(function(){
         Composer.favorite(tweet, true);
       });
-    }else{
+    }else if(tweet.favorited == true){
       $("<a />").html("<img src='images/star.png' id='favorite' />  ").attr("title", "取消收藏").appendTo($actions).click(function(){
         Composer.favorite(tweet, false);
       });
@@ -96,11 +97,19 @@ var Renderer = {
     //判断消息是否是自己的
     if (tweet.user.id == localStorage.id){
       $("<a />").html("<img src='images/trash.gif' />  ").attr("title", "删除").appendTo($actions).click(function(){
+
         Composer.trash(_container.data("tweet"));
       });
     }
 
+    //主文字区
     $("<div />").addClass("text").html(text).appendTo(_container);
+
+    //显示回复内容区
+    $("<div />").addClass("reply_msg_info").appendTo(_container);
+    
+    //cleanup
+    $("<div />").addClass("clear").appendTo(_container);
     
     var footer = $("<div />").addClass("footer").appendTo(_container);
     var fleft = $("<div />").addClass("fleft").appendTo(footer)
@@ -109,7 +118,9 @@ var Renderer = {
     //if have in_reply_to_status_id
     if (tweet.in_reply_to_status_id){
         //click show/hide msg info
-        fleft.append($("<a />").addClass("in_reply_msg").text("查看回复").attr("href", "#"));
+        fleft.append($("<a />").addClass("in_reply_msg").text("查看回复").attr("href", "#").click(function(){
+            Composer.showTweet(_container.data("tweet")); 
+        }));
     }
     if (tweet.source){
       $("<div />").addClass("fromsource").appendTo(footer).html("通过"+tweet.source);

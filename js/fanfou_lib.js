@@ -84,6 +84,10 @@ FanfouLib.prototype.unfavorite = function(callback, id){
   this.ajaxRequest("favorites/destroy/" + id, callback, null, null, "POST");
 }
 
+FanfouLib.prototype.showTweet = function(callback, id){
+  this.ajaxRequest("statuses/show/"+id, callback, null, null, "POST");
+}
+
 FanfouLib.prototype.timeline = function(path, callback, context, count, page, sinceId, maxId){
   var params = {};
   if (count)

@@ -102,10 +102,9 @@ Timeline.prototype.onFetch = function(success, tweets, status, context){
   var t = 0;
   if (context.usingMaxId){
     t = 1;
-    console.log("usingMaxId");
+    //console.log("usingMaxId");
   }
 
-  //maxId获取消息 似乎有问题。 每次maxid都是一样的 是否是api问题导致的
   for (; t < tweets.length; ++t){
     this.tweetsCache.push(tweets[t]);
   }
@@ -152,7 +151,7 @@ Timeline.prototype.giveMeTweets = function(callback, syncNew, cacheOnly){
   if (this.tweetsCache.length > 0){
     maxId = this.tweetsCache[this.tweetsCache.length - 1].id
   }
-  console.log("maxId",maxId)
+  //console.log("maxId",maxId)
   var context = {
     usingMaxId: !!maxId
   }
