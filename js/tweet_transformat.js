@@ -5,6 +5,21 @@ var FanfouLib = {
   }
 }
 var Renderer = {
+  setContext : function(val){
+    this.context = val;//desktop or onpage or popup
+  },
+  isDesktop : function(){
+    return this.context == "desktop";
+  },
+  isOnPage : function(){
+    return this.context = "onpage";
+  },
+  isPopup : function(){
+    return this.context = "popup";
+  },
+  isNotification : function(){
+    return this.context != "popup";
+  },
   transformTweetText : function(text){
 
   },
@@ -53,10 +68,16 @@ var Renderer = {
     var user = tweet.user.id;
     var nickName = tweet.user.screen_name;
     var tweetId = tweet.id;
-    var _container = $("<div id=tweet_"+tweetId+"></div>").addClass("tweet");
-    //尝试使用jQuery data 
-    _container.data("tweet", tweet);//include tweet data info;
     var text = tweet.text;
+    //if rtweet, user, text, tweetId replace real, but Fanfou hasn't
+    //create main container for tweet
+    var _container = $("<div id=tweet_"+tweetId+"></div>").addClass("tweet");
+    //使用jQuery data 
+    _container.data("tweet", tweet);//include tweet data info;
+    
+    //update text data
+    var content = this.transformTweetText(text);
+
     
     //TODO:用户头像, 这里点击后会出现下拉菜单
     $("<img />").addClass("avatar").attr("src", tweet.user.profile_image_url).click(function(){
@@ -69,39 +90,39 @@ var Renderer = {
      openTab(FanfouLib.URLS.BASE + user);
     }).appendTo(topinfo);
 
-    var $actions = $("<div />").appendTo(topinfo).addClass("actions");
+    if (!this.isNotification()){
+        //饭否操作区
+        var $actions = $("<div />").appendTo(topinfo).addClass("actions");
+        $("<a />").html("<img src='images/reply.png' />  ").attr("title", "回复").click(function(){
+          console.log(tweetId)
+          Composer.reply(_container.data("tweet")); 
+        }).appendTo($actions)
+          
+        //TODO:
+        //$("<a />").html("<img src='images/dm.png' />  ").attr("title", "私信").appendTo($actions);
+       
+        //if dms, favorite = false
+        if (tweet.favorited == false){//判断是否已经收藏了
+          $("<a />").html("<img src='images/star_grey.png' id='favorite' />  ").attr("title", "收藏").appendTo($actions).click(function(){
+            Composer.favorite(tweet, true);
+          });
+        }else if(tweet.favorited == true){
+          $("<a />").html("<img src='images/star.png' id='favorite' />  ").attr("title", "取消收藏").appendTo($actions).click(function(){
+            Composer.favorite(tweet, false);
+          });
+        }
+        
+        $("<a />").html("<img src='images/rt.png' />  ").attr("title", "转发").appendTo($actions).click(function(){
+          Composer.retweet(_container.data("tweet"));
+        });
+        //判断消息是否是自己的
+        if (tweet.user.id == localStorage.id){
+          $("<a />").html("<img src='images/trash.gif' />  ").attr("title", "删除").appendTo($actions).click(function(){
 
-    $("<a />").html("<img src='images/reply.png' />  ").attr("title", "回复").click(function(){
-      console.log(tweetId)
-      Composer.reply(_container.data("tweet")); 
-    }).appendTo($actions)
-      
-    //TODO:
-    //$("<a />").html("<img src='images/dm.png' />  ").attr("title", "私信").appendTo($actions);
-   
-    //if dms, favorite = false
-    if (tweet.favorited == false){//判断是否已经收藏了
-      $("<a />").html("<img src='images/star_grey.png' id='favorite' />  ").attr("title", "收藏").appendTo($actions).click(function(){
-        Composer.favorite(tweet, true);
-      });
-    }else if(tweet.favorited == true){
-      $("<a />").html("<img src='images/star.png' id='favorite' />  ").attr("title", "取消收藏").appendTo($actions).click(function(){
-        Composer.favorite(tweet, false);
-      });
+            Composer.trash(_container.data("tweet"));
+          });
+        }
     }
-    
-    $("<a />").html("<img src='images/rt.png' />  ").attr("title", "转发").appendTo($actions).click(function(){
-      Composer.retweet(_container.data("tweet"));
-    });
-    
-    //判断消息是否是自己的
-    if (tweet.user.id == localStorage.id){
-      $("<a />").html("<img src='images/trash.gif' />  ").attr("title", "删除").appendTo($actions).click(function(){
-
-        Composer.trash(_container.data("tweet"));
-      });
-    }
-
     //主文字区
     //测试text中是否有http://fanfou.com/photo/(\w*)?
     //if (){

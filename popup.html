@@ -315,6 +315,7 @@
       $(function(){
         //从后台获取.. 获得是否需要登录
         //FanfouManager = chrome.extension.getBackgroundPage().FanfouManager.instance;
+        Renderer.setContext("popup");
         if (!FanfouManager){
           $("#signin").show();
           $("input[name='user']").focus();

@@ -1,0 +1,24 @@
+html,body{
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tweet{
+  width: inherit;
+  border: 0;
+  margin: 0;
+  -webkit-border-radius: 0;
+}
+
+#progress{
+  position: absolute;
+  display: none;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  text-align: center;
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  left: 0px;
+}
