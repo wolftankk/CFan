@@ -17,6 +17,7 @@
     function FanfouManager(user, passwd){
         this.unreadTweets = {}
         this.readTweets = {};
+        this.shouldNotReadMap = {};
         this.injectTweets = null;
 
         this.newTweetsCallback = null;
@@ -93,6 +94,7 @@ FanfouManager.prototype.showTweetsNotifications = function(tweetsToNotify, force
     setTimeout(function(){
       if (!notificationDisplayed){
         for (var c=0;c<tweetsToNotify.length; ++c){
+          that.shouldNotReadMap[tweetsToNotify[c].id] = true;
         }
         that.safeTweetsNotifications(tweetsToNotify, false);
       }
@@ -121,16 +123,27 @@ FanfouManager.prototype.registerNewTweetsCallback = function(callback){
   this.newTweetsCallback = callback;
 }
 FanfouManager.prototype.readTweet = function(id){
+  if (this.shouldNotReadMap[id]){
+    delete this.shouldNotReadMap[id];
+    return;
+  }
   this.readTweets[id] = true;
   delete this.unreadTweets[id];
+  this.notifyNewTweets();
 }
 FanfouManager.prototype.isTweetRead = function(id){
   return !this.unreadTweets[id]
 }
 FanfouManager.prototype.notifyNewTweets = function(timelineId, size, unreadSize){
-  try{
-    this.newTweetsCallback(size, unreadSize, timelineId);
-  }catch(e){}
+  if (this.newTweetsCallback){
+    var that = this;
+    this.eachTimeline(function(timeline){
+        var newTweets = timeline.newTweetsCount();
+        try{
+          that.newTweetsCallback(newTweets[0], newTweets[1], timeline.timelineId);
+        }catch(e){}
+    });
+  }
   this.updateAlert();
 }
 FanfouManager.prototype.postTweet = function(callback, msg, replyId, postStatus){

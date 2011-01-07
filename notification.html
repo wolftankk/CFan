@@ -31,7 +31,8 @@
             "bottom" : "0px",
             "width" : "100%"
             }).animate({width : "0px"}, fadeTimeout, "linear", function(){
-              
+            
+            FanfouManager.shouldNotReadMap[tweet.id] = true;
             window.close();
           });
 
