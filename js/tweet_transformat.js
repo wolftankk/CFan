@@ -59,7 +59,7 @@ var Renderer = {
     var text = tweet.text;
     
     //TODO:用户头像, 这里点击后会出现下拉菜单
-    $("<img />").attr("src", tweet.user.profile_image_url).click(function(){
+    $("<img />").addClass("avatar").attr("src", tweet.user.profile_image_url).click(function(){
       openTab(FanfouLib.URLS.BASE + user);
     }).appendTo(_container);
 
@@ -103,7 +103,20 @@ var Renderer = {
     }
 
     //主文字区
+    //测试text中是否有http://fanfou.com/photo/(\w*)?
+    //if (){
+    //}
+    var hasImage = false;
+    if (text.match(/http\:\/\/fanfou.com\/photo\/(\w*)/)){
+      hasImage = true;
+    }
     $("<div />").addClass("text").html(text).appendTo(_container);
+    if (hasImage && tweet.photo){
+      var img = $("<div />").appendTo(_container).addClass("photo_preview");
+      //.attr({"title" : "点击查看大图", "href" : tweet.photo.largeurl}).
+      $("<a />").append($("<img />").attr("src", tweet.photo.thumburl)).appendTo(img);
+    }
+    
 
     //显示回复内容区
     $("<div />").addClass("reply_msg_info").appendTo(_container);

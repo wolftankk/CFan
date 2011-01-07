@@ -1,0 +1,29 @@
+html, body{
+  font-family: "微软雅黑", sans-serif;
+  font-style: normal;
+}
+
+body{
+  margin: 0;
+  padding: 0;
+  color: #000;
+  font-size: 11px;
+  overflow: hidden;
+}
+
+#layout{
+  width: 960px;
+  margin: 0 auto;
+}
+
+h1{
+  color: #4A89CE;
+}
+
+fieldset{
+  border: 1px solid #b4cff2;
+}
+
+fieldset legend{
+  font-weight: bold;
+}

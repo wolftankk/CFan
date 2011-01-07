@@ -148,7 +148,7 @@ a:hover{
   width: auto;
 }
 
-.tweet img {
+.tweet .avatar {
   -webkit-border-radius: 5px;
   border: 0;
   margin-right: 4px;
@@ -346,7 +346,7 @@ a:hover{
     overflow: hidden;
     background: none;
 }
-.reply_msg_info .tweet img {
+.reply_msg_info .tweet .avatar {
   -webkit-border-radius: 2px;
   border: 0;
   margin-right: 4px;
@@ -409,4 +409,15 @@ a:hover{
   float: none;
   height: auto;
   width: auto;
+}
+
+.photo_preview{
+  overflow: hidden;
+}
+
+.photo_preview a img{
+  border: 1px solid #ccc;
+  padding: 2px;
+  background: #fff;
+  display: block;
 }
