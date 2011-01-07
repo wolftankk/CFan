@@ -9,9 +9,11 @@ OptionsBackend = {
     request_timeout : 6000,
     
     ids_color : "#4880a6",
-    home_color : "#9c2e2e"
+    home_color : "#9c2e2e",
     //memtions_color : "",
     //dms_color : "#7f870b",
+    notification_style : "on_page",
+    mex_notifications : 5
   },
   cachedOptions: null,
   optionsData: Persistence.options(),

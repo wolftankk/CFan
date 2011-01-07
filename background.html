@@ -17,6 +17,8 @@
     function FanfouManager(user, passwd){
         this.unreadTweets = {}
         this.readTweets = {};
+        this.injectTweets = null;
+
         this.newTweetsCallback = null;
         this.saveMessage =  '';
         this.isComposing = false
@@ -42,8 +44,11 @@ FanfouManager.prototype.eachTimeline = function(callback){
 }
 FanfouManager.prototype.updateAlert = function(){
   var unreadNewCount = 0;
+  var unreadNewTweets = [];
   this.eachTimeline(function(timeline){
     unreadNewCount += timeline.newTweetsCount()[1];      
+
+    unreadNewTweets = unreadNewTweets.concat(timeline.getNewUnreadTweets());
   })
   if (unreadNewCount == 0){
     chrome.browserAction.setBadgeText({text : ""});
@@ -52,7 +57,66 @@ FanfouManager.prototype.updateAlert = function(){
     chrome.browserAction.setTitle({title: title});
     chrome.browserAction.setBadgeText({text : unreadNewCount + ""});
   }
+  if (unreadNewTweets.length > 0){
+    //desktop notify
+    console.log("unreadNewTweets", unreadNewTweets); 
+    this.showTweetsNotifications(unreadNewTweets);
+  }
 }
+FanfouManager.prototype.safeTweetsNotifications = function(tweetsToNotify, shouldChangeOption){
+  this.showTweetsNotifications(tweetsToNotify, true);
+}
+FanfouManager.prototype.showTweetsNotifications = function(tweetsToNotify, forceOnPage){
+  if (!tweetsToNotify || tweetsToNotify.length == 0){
+    return;
+  }
+
+  //这里会做显示数量限制
+  var maxTweetsNotifications = OptionsBackend.get("mex_notifications");
+  if (maxTweetsNotifications != -1 && tweetsToNotify.length > maxTweetsNotifications){
+    tweetsToNotify.splice(maxTweetsNotifications, tweetsToNotify.length - maxTweetsNotifications);
+  }
+  this.injectTweets = tweetsToNotify;
+  var notification_style = OptionsBackend.get("notification_style");
+  if (!forceOnPage && notification_style == "desktop"){
+    var notificationCenter = window.notifications || window.webkitNotifications;
+    var authStatus = notificationCenter.checkPermission();
+      if(authStatus == 1 || authStatus == 2) { //Not Allowed or Denied
+        throw 'Desktop notifications not allowed';
+    }
+    
+    var notificationDisplayed = false;
+    var OnDisplayFunc = function(){
+      notificationDisplayed = true;
+    }
+    var that = this;
+    setTimeout(function(){
+      if (!notificationDisplayed){
+        for (var c=0;c<tweetsToNotify.length; ++c){
+        }
+        that.safeTweetsNotifications(tweetsToNotify, false);
+      }
+    }, 1000);
+
+    for (var t = 0; t < tweetsToNotify.length; ++t){
+      var notification =  notificationCenter.createHTMLNotification(
+        chrome.extension.getURL("notification.html")
+      );
+      (function inClosure(tweet){
+        notification.noclose = function(e){
+          setTimeout(function(){
+            that.readTweet(tweet.id);
+          }, 200)
+        }
+      })(tweetsToNotify[t]);
+      notification.ondisplay = OnDisplayFunc;
+      notification.show();
+    }
+  }else{
+
+  }
+}
+
 FanfouManager.prototype.registerNewTweetsCallback = function(callback){
   this.newTweetsCallback = callback;
 }

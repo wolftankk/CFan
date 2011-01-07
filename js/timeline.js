@@ -6,6 +6,7 @@ function Timeline(timelineid, manager, recheckTime){
 
   this.tweetsCache = [];
   this.newTweetsCache = [];
+  this.unreadNotified = [];
   this.timerId = null;
   this.currentError = null;
   this.currentCallback = null;
@@ -178,6 +179,7 @@ Timeline.prototype.cleanUpCache = function(){
 Timeline.prototype.updateNewTweets = function(){
   this.tweetsCache = this.newTweetsCache.concat(this.tweetsCache);
   this.newTweetsCache = [];
+  this.unreadNotified = [];
 }
 
 Timeline.prototype.newTweetsCount = function(){
@@ -188,4 +190,12 @@ Timeline.prototype.newTweetsCount = function(){
     }
   }
   return [this.newTweetsCache.length, unreadCount];
+}
+Timeline.prototype.getNewUnreadTweets = function(){
+  var unreadNewList = [];
+  for (var t = 0; t < this.newTweetsCache.length; ++t){
+    unreadNewList.push(this.newTweetsCache[t]);
+    this.unreadNotified[this.newTweetsCache[t].id] = true;
+  }
+  return unreadNewList;
 }
