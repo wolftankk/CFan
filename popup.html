@@ -96,6 +96,12 @@
                 }
               }
           },
+          refreshNew: function(){
+            if ($("#loading").is(":visible")){
+              return;
+            }
+            loadTimeline(true);
+          },
           sendTweet : function(){
             $("#loading").show();
             $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
@@ -361,6 +367,10 @@
         $("#tabs ul li").each(function(){
             $(this).bind("click", _onclick); 
         });
+
+        $("#options_link").click(function(){
+          openTab(chrome.extension.getURL('options.html')); 
+        });
       });
       setTimeout(function(){
         FanfouManager.eachTimeline(function(timeline){
@@ -410,7 +420,7 @@
         <img class="right" src="images/arrow_down.gif"/>
       </div>
 
-        <div id="logout"><a href="#" onclick="signout()">退出</a></div>   
+        <div id="logout"><a href="#" onclick="signout()">退出</a> <a href="#" id="options_link">设置</a> <a href="#" onclick="Composer.refreshNew();">刷新</a></div>   
         <img src="images/loading.gif" id="loading" style="display:none;" />
         <div class="clear"></div>
         <div id="update_tweets" onclick="loadNewTweets();"></div>
