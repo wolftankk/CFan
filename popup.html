@@ -55,6 +55,21 @@
         }
       }
 
+      var ImageUpload = {
+        init : function(){
+          this.imgUploader = $("#image_input")[0];
+        },
+        check : function(){
+          var fileList = this.imgUploader.files; 
+          var file = fileList[0];
+          var size = file.fileSize;
+          //大于550K
+          if (size/1024 > 550){
+            //alert
+          }
+        }
+      }
+
       var Composer = {
           replyId : null,
           postSatus : "",
@@ -104,6 +119,7 @@
           },
           sendTweet : function(){
             $("#loading").show();
+            var imgFiles = $("#image_input")[0].files;
             $("#compose_tweet_area input[type='button']").attr("disabled", "disabled");
             $("#compose_tweet_area textarea").attr("disabled", "disabled");
             FanfouManager.postTweet(function(success, data, status){
@@ -121,7 +137,7 @@
                   loadTimeline(true, FanfouManager.currentTimeline);
                 }else{
                 }
-            }, $("#compose_tweet_area textarea").val(), Composer.replyId, Composer.postSatus);
+            }, $("#compose_tweet_area textarea").val(), Composer.replyId, Composer.postSatus, imgFiles);
           },
           //显示指定的消息
           showTweet : function(tweet){
@@ -373,6 +389,7 @@
         });
       });
       setTimeout(function(){
+        ImageUpload.init();
         FanfouManager.eachTimeline(function(timeline){
           var timelineId = this;
           var c = $("#timeline_" + timelineId);
@@ -410,6 +427,7 @@
         <!--<input type="file"/>-->
         <div class="footer">
           <input type="button" value="发送" onclick="Composer.sendTweet();"/>
+          <input type="file" id="image_input" name="media_image" accept="image/*" onchange="ImageUpload.check();" />
           <span class="chars_left"></span>
         </div>
       </div>

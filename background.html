@@ -146,11 +146,11 @@ FanfouManager.prototype.notifyNewTweets = function(timelineId, size, unreadSize)
   }
   this.updateAlert();
 }
-FanfouManager.prototype.postTweet = function(callback, msg, replyId, postStatus){
+FanfouManager.prototype.postTweet = function(callback, msg, replyId, postStatus, imgFiles){
   if (postStatus == "retweet"){
     return this.ffBackend.retweet(callback, msg, replyId);
   }else{
-    return this.ffBackend.tweet(callback, msg, replyId);
+    return this.ffBackend.tweet(callback, msg, replyId, imgFiles);
   }
 }
 

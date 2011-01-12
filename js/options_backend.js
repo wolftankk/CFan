@@ -12,7 +12,7 @@ OptionsBackend = {
     home_color : "#9c2e2e",
     //memtions_color : "",
     //dms_color : "#7f870b",
-    notification_style : "desktop",
+    notification_style : "popup",
     mex_notifications : 5
   },
   cachedOptions: null,

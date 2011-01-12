@@ -69,7 +69,6 @@ a:hover{
   outline: 1px solid #882;
 }
 
-
 #workspace{
   min-width: 400px;
   margin: 0 4px;
@@ -203,6 +202,7 @@ a:hover{
   float: right;
 }
 
+/*
 #compose_tweet_area input[type="button"] {
   margin: 2px 0px 2px 0px;
   padding: 0px;
@@ -218,7 +218,7 @@ a:hover{
 #compose_tweet_area input[type="button"]:hover:disabled {
   outline: inherit;
 }
-
+*/
 /*
 #compose_tweet_area input[type="file"] {
   margin: 2px 0px 2px 0px;
