@@ -132,10 +132,11 @@ var Renderer = {
     $textview = $("<div />").addClass("text").html(text).appendTo(_container);
 		$textview.find("a").each(function(){
 			var href = $(this).attr("href");
-			if (href.match(/http\:\/\/[www\.]?fanfou.com/)){
-			}else{
+			if (href.match(/^\/(\w*)\/(.*)/)){
+				//href = /q/xxx
 				href = FanfouLib.URLS.BASE + href.substr(1);
 			}
+			console.log(href);
 			$(this).click(function(){
 				openTab(href);
 			});
