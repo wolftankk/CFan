@@ -125,13 +125,22 @@ var Renderer = {
     }
     //主文字区
     //测试text中是否有http://fanfou.com/photo/(\w*)?
-    //if (){
-    //}
     var hasImage = false;
     if (text.match(/http\:\/\/fanfou.com\/photo\/(\w*)/)){
       hasImage = true;
     }
-    $("<div />").addClass("text").html(text).appendTo(_container);
+    $textview = $("<div />").addClass("text").html(text).appendTo(_container);
+		$textview.find("a").each(function(){
+			var href = $(this).attr("href");
+			if (href.match(/http\:\/\/[www\.]?fanfou.com/)){
+			}else{
+				href = FanfouLib.URLS.BASE + href.substr(1);
+			}
+			$(this).click(function(){
+				openTab(href);
+			});
+			$(this).attr("href", "javascript:;");
+		});
     if (hasImage && tweet.photo){
       var img = $("<div />").appendTo(_container).addClass("photo_preview");
       //.attr({"title" : "点击查看大图", "href" : tweet.photo.largeurl}).
