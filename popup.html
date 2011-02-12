@@ -438,7 +438,7 @@
         <img class="right" src="images/arrow_down.gif"/>
       </div>
 
-        <div id="logout"><a href="#" onclick="signout()">退出</a> <a href="#" id="options_link">设置</a> <a href="#" onclick="Composer.refreshNew();">刷新</a></div>   
+        <div id="logout"><a href="#" onclick="signout()">退出</a> | <a href="#" id="options_link">设置</a> | <a href="#" onclick="Composer.refreshNew();">刷新</a></div>   
         <img src="images/loading.gif" id="loading" style="display:none;" />
         <div class="clear"></div>
         <div id="update_tweets" onclick="loadNewTweets();"></div>
@@ -448,10 +448,16 @@
               <li class="current" id="timeline_home-click"><span>首页</span></li>
               <li id="timeline_mentions-click"><span>@我的</span></li>
               <li id="timeline_dms-click"><span>私信</span></li>
+              <!--
+              <li id="timeline_favorites-click"><span>收藏</span></li>
+              -->
             </ul>
             <div class="container" id="timeline_home"></div>
-            <div class="container" style="display:none;" id="timeline_mentions">Coming Soon</div>
-            <div class="container" style="display:none;" id="timeline_dms">Coming Soon</div>
+            <div class="container" style="display:none;" id="timeline_mentions"></div>
+            <div class="container" style="display:none;" id="timeline_dms"></div>
+            <!--
+            <div class="container" style="display:none;" id="timeline_favorites"></div>
+            -->
         </div>
     </div>
   </body>

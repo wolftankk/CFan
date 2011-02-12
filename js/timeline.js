@@ -19,10 +19,13 @@ function Timeline(timelineid, manager, recheckTime){
       this.timelinePath = 'statuses/friends_timeline';
       break;
     case 'mentions':
-      this.timelinePath = "statuses/replies";
+      this.timelinePath = "statuses/mentions";
       break;
     case 'dms':
       this.timelinePath = "direct_messages";
+      break;
+    case "favorites":
+      this.timelinePath = "favorites";
       break;
   }
 }

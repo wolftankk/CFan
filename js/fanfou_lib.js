@@ -51,13 +51,18 @@ FanfouLib.prototype.getSelfInfo = function(){
   });
 }
 
-FanfouLib.prototype.tweet = function(callback, msg, replyId){
-  params = {status : msg
+FanfouLib.prototype.tweet = function(callback, msg, replyId, imgFiles){
+  params = {
+    status : msg
   };
   if (replyId){
     params.in_reply_to_status_id = replyId
   }
-  this.ajaxRequest("statuses/update", callback, null, params, "POST");
+  if (imgFiles != null && imgFiles.length > 0){
+    
+  }else{
+    this.ajaxRequest("statuses/update", callback, null, params, "POST");
+  }
 }
 
 FanfouLib.prototype.retweet = function(callback, msg, repostId){

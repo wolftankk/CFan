@@ -157,7 +157,9 @@ var Renderer = {
         }));
     }
     if (tweet.source){
-      $("<div />").addClass("fromsource").appendTo(footer).html("通过"+tweet.source);
+      var fright = $("<div />").addClass("fromsource").appendTo(footer)
+      fright.html("通过"+tweet.source);
+      //location
     }
     $("<div />").addClass("clear").appendTo(_container);
 
