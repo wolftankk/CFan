@@ -136,7 +136,7 @@ var Renderer = {
 				//href = /q/xxx
 				href = FanfouLib.URLS.BASE + href.substr(1);
 			}
-			console.log(href);
+			//console.log(href);
 			$(this).click(function(){
 				openTab(href);
 			});

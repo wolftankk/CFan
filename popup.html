@@ -45,9 +45,11 @@
       var loadingNewTweets = false;
       var Paginator = {
         needsMore: false,
-        firstPage : function(){
+        firstPage : function(shouldScrollTop){
             this.needsMore = false;
-            $("#timeline").scrollTop(0);
+						if (shouldScrollTop){
+							$("timeline-" + FanfouManager.getCurrentTimeline()).scrollTop(0);
+						}
         },
         nextPage : function(){
             this.needsMore = true;
@@ -202,7 +204,6 @@
       }
 
       function onTimelineRetrieved(tweets, timelineId){
-        console.log(tweets);
         $("#loading").hide();
         //console.log(tweets)
         if (tweets){
@@ -216,7 +217,7 @@
 
       function assemblyTweets(tweets, timelineId){
         var container = $("#timeline_" + timelineId);
-        container.empty();
+				container.empty();
         for (var c = 0; c < tweets.length; ++c){
           container.append(Renderer.renderTweet(tweets[c]))
         }
@@ -305,7 +306,7 @@
       }
 
       function loadNewTweets(){
-        Paginator.firstPage();
+        Paginator.firstPage(true);
         FanfouManager.updateNewTweets();
         //update tab
         $("#update_tweets").fadeOut();
@@ -349,7 +350,7 @@
                 signin();
               }
           }
-        }else{
+        }else{	
           $("#workspace").show();
           preLoadTimeline();
         }
@@ -375,14 +376,21 @@
           var currentTab = $(this);
           currentTab.addClass("current");
           var currentContainer = currentTab.attr("id").replace("-click", ""); 
-          $("#" + currentContainer).show();// show tab container page
+          $("#" + currentContainer).show().triggerHandler("show");// show tab container page	
           FanfouManager.currentTimeline = currentContainer.split("_")[1]; 
           $("#update_tweets").hide();
           preLoadTimeline();
         }
+
         $("#tabs ul li").each(function(){
             $(this).bind("click", _onclick); 
         });
+
+				$("#tabs div.container").each(function(){
+						$(this).bind("show", function(){
+							$(this).scrollTop(FanfouManager.getCurrentTimeline().currentScroll);
+						})
+				});
 
         $("#options_link").click(function(){
           openTab(chrome.extension.getURL('options.html')); 
