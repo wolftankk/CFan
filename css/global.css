@@ -26,6 +26,10 @@ a:hover{
   background-color: #8e8e8e;
 }
 
+/*
+{{{
+// signin area
+*/
 #signin{
   width: 210px;
   background: #fff;
@@ -68,6 +72,10 @@ a:hover{
 #signin input[tyle="button"]:hover{
   outline: 1px solid #882;
 }
+
+/*
+}}}
+*/
 
 #workspace{
   min-width: 400px;
