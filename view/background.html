@@ -1,0 +1,217 @@
+<html>
+  <head>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/sha1.js"></script>
+    <script type="text/javascript" src="js/icon_creator.js"></script>
+    <script type="text/javascript" src="js/timeline.js"></script>
+    <script type="text/javascript" src="js/persistence.js"></script>
+    <script type="text/javascript" src="js/options_backend.js"></script>
+    <script type="text/javascript" src="js/fanfou_lib.js"></script>
+  </head>
+  <body>
+  <script type="text/javascript">
+    $.ajaxSetup({
+      timeout: OptionsBackend.get("timeout")
+    })
+    var MAX_TWEET_SIZE = 140;
+    function FanfouManager(user, passwd){
+        this.unreadTweets = {}
+        this.readTweets = {};
+        this.shouldNotReadMap = {};
+        this.injectTweets = null;
+
+        this.newTweetsCallback = null;
+        this.saveMessage =  '';
+        this.isComposing = false
+        this.currentTimeline = "home"
+
+        this.timelines = {};
+        this.timelines["home"] = new Timeline("home", this, OptionsBackend.get("home_refresh_interval"));
+        this.timelines["mentions"] = new Timeline("mentions", this, OptionsBackend.get("memtions_refresh_interval"));
+        this.timelines["dms"] = new Timeline("dms", this, OptionsBackend.get("dms_refresh_interval"));
+        //this.timelines["favorites"] = new Timeline("favorites", this, 12000);
+
+        var that = this
+        this.ffBackend = new FanfouLib(user, passwd, function(){
+            that.giveMeTweets.call(that, "home", function(){});
+            that.giveMeTweets.call(that, "mentions", function(){});
+            that.giveMeTweets.call(that, "dms", function(){});
+        });
+    }
+
+FanfouManager.prototype.eachTimeline = function(callback){
+  for (var id in this.timelines){
+    callback.call(id, this.timelines[id]);
+  }
+}
+FanfouManager.prototype.updateAlert = function(){
+  var unreadNewCount = 0;
+  var unreadNewTweets = [];
+  this.eachTimeline(function(timeline){
+    unreadNewCount += timeline.newTweetsCount()[1];      
+
+    unreadNewTweets = unreadNewTweets.concat(timeline.getNewUnreadTweets());
+  })
+  if (unreadNewCount == 0){
+    chrome.browserAction.setBadgeText({text : ""});
+  }else{
+    var title = unreadNewCount + "条新消息";
+    chrome.browserAction.setTitle({title: title});
+    chrome.browserAction.setBadgeText({text : unreadNewCount + ""});
+  }
+  if (unreadNewTweets.length > 0){
+    //desktop notify
+    console.log("unreadNewTweets", unreadNewTweets); 
+    this.showTweetsNotifications(unreadNewTweets);
+  }
+}
+FanfouManager.prototype.safeTweetsNotifications = function(tweetsToNotify, shouldChangeOption){
+  this.showTweetsNotifications(tweetsToNotify, true);
+}
+FanfouManager.prototype.showTweetsNotifications = function(tweetsToNotify, forceOnPage){
+  if (!tweetsToNotify || tweetsToNotify.length == 0){
+    return;
+  }
+
+  //这里会做显示数量限制
+  var maxTweetsNotifications = OptionsBackend.get("mex_notifications");
+  if (maxTweetsNotifications != -1 && tweetsToNotify.length > maxTweetsNotifications){
+    tweetsToNotify.splice(maxTweetsNotifications, tweetsToNotify.length - maxTweetsNotifications);
+  }
+  this.injectTweets = tweetsToNotify;
+  var notification_style = OptionsBackend.get("notification_style");
+  if (!forceOnPage && notification_style == "desktop"){
+    var notificationCenter = window.notifications || window.webkitNotifications;
+    var authStatus = notificationCenter.checkPermission();
+      if(authStatus == 1 || authStatus == 2) { //Not Allowed or Denied
+        throw 'Desktop notifications not allowed';
+    }
+    
+    var notificationDisplayed = false;
+    var OnDisplayFunc = function(){
+      notificationDisplayed = true;
+    }
+    var that = this;
+    setTimeout(function(){
+      if (!notificationDisplayed){
+        for (var c=0;c<tweetsToNotify.length; ++c){
+          that.shouldNotReadMap[tweetsToNotify[c].id] = true;
+        }
+        that.safeTweetsNotifications(tweetsToNotify, false);
+      }
+    }, 1000);
+
+    for (var t = 0; t < tweetsToNotify.length; ++t){
+      var notification =  notificationCenter.createHTMLNotification(
+        chrome.extension.getURL("notification.html")
+      );
+      (function inClosure(tweet){
+        notification.noclose = function(e){
+          setTimeout(function(){
+            that.readTweet(tweet.id);
+          }, 200)
+        }
+      })(tweetsToNotify[t]);
+      notification.ondisplay = OnDisplayFunc;
+      notification.show();
+    }
+  }else{
+
+  }
+}
+
+FanfouManager.prototype.registerNewTweetsCallback = function(callback){
+  this.newTweetsCallback = callback;
+}
+FanfouManager.prototype.readTweet = function(id){
+  if (this.shouldNotReadMap[id]){
+    delete this.shouldNotReadMap[id];
+    return;
+  }
+  this.readTweets[id] = true;
+  delete this.unreadTweets[id];
+  this.notifyNewTweets();
+}
+FanfouManager.prototype.isTweetRead = function(id){
+  return !this.unreadTweets[id]
+}
+FanfouManager.prototype.notifyNewTweets = function(timelineId, size, unreadSize){
+  if (this.newTweetsCallback){
+    var that = this;
+    this.eachTimeline(function(timeline){
+        var newTweets = timeline.newTweetsCount();
+        try{
+          that.newTweetsCallback(newTweets[0], newTweets[1], timeline.timelineId);
+        }catch(e){}
+    });
+  }
+  this.updateAlert();
+}
+FanfouManager.prototype.postTweet = function(callback, msg, replyId, postStatus, imgFiles){
+  if (postStatus == "retweet"){
+    return this.ffBackend.retweet(callback, msg, replyId);
+  }else{
+    return this.ffBackend.tweet(callback, msg, replyId, imgFiles);
+  }
+}
+
+FanfouManager.prototype.favorite = function(callback, id, isNeed){
+  if (isNeed){
+    return this.ffBackend.favorite(callback, id);
+  }else{
+    return this.ffBackend.unfavorite(callback, id);
+  }
+}
+FanfouManager.prototype.showTweet = function(callback, id){
+    return this.ffBackend.showTweet(callback, id);
+}
+FanfouManager.prototype.trashTweet = function(callback, id){
+  return this.ffBackend.destroy(callback, id);
+}
+
+FanfouManager.prototype.giveMeTweets = function(timelineId, callback, syncNew, cacheOnly){
+  return this.timelines[timelineId].giveMeTweets(callback, syncNew, cacheOnly);
+}
+FanfouManager.prototype.newTweetsCount = function(timelineId){
+  return this.timelines[timelineId].newTweetsCount();
+}
+FanfouManager.prototype.updateNewTweets = function(){
+  this.timelines[this.currentTimeline].updateNewTweets();
+  this.updateAlert();
+}
+FanfouManager.prototype.getCurrentTimeline = function(){
+  return this.timelines[this.currentTimeline];
+}
+FanfouManager.prototype.currentError = function(){
+  return this.timelines[this.currentTimeline].currentError;
+}
+FanfouManager.prototype.stopAll = function(){
+  this.eachTimeline(function(timeline){
+    timeline.stopTimer();
+    delete timeline;
+  })
+}
+FanfouManager.prototype.clear = function(){
+    this.unreadTweets = {}
+    this.readTweets = {};
+    this.newTweetsCallback = null;
+    this.saveMessage =  '';
+    this.isComposing = false
+    this.currentTimeline = "home"
+}
+FanfouManager.prototype.signout = function(){
+  this.stopAll();
+  this.clear();
+  FanfouManager.instance = null;
+}
+
+    function signin(user, passwd){
+      FanfouManager.instance = new FanfouManager(user, passwd);
+    }
+    
+     if (localStorage.remember && localStorage.logged){
+        signin(localStorage.username, localStorage.password);
+     }
+  </script>
+  </body>
+</html>

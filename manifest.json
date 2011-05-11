@@ -24,10 +24,5 @@
     "http://*.fanfou.com"
   ],
 	"minimum_chrome_version": "8",
-  "options_page" : "options.html",
-  "browser_action" : {
-    "default_icon" : "images/icon-32.png",
-    "default_title" : "CFan",
-    "popup" : "popup.html?popup"
-  }
+  "options_page" : "view/options.html"
 }
