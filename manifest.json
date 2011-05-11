@@ -1,7 +1,14 @@
 {
-  "name": "稀饭",
+	"app" : {
+		"launch" : {
+			"local_path" : "view/default.html"
+		}
+	},
+  "background_page": "view/background.html",
+  "name": "稀饭-桌面版",
   "version":"0.5",
-  "description": "Chrome版饭否插件",
+  "description": "Chrome Apps饭否插件",
+	"homepage_url" : "http://www.yeerx.com/CFan",
   "icons" : {
     "16" : "images/icon-16.png",
     "32" : "images/icon-32.png",
@@ -9,13 +16,15 @@
     "128" : "images/icon-128.png"
   },
   "permissions":[
+		"unlimitedStorage",
     "notifications",
     "contextMenus",
+		"geolocation",
     "tabs",
-    "http://*/*"
+    "http://*.fanfou.com"
   ],
+	"minimum_chrome_version": "8",
   "options_page" : "options.html",
-  "background_page": "background.html",
   "browser_action" : {
     "default_icon" : "images/icon-32.png",
     "default_title" : "CFan",
